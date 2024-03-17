@@ -17,8 +17,7 @@ const israeli_bank_scrapers_1 = require("israeli-bank-scrapers");
             const calOptions = {
                 companyId: israeli_bank_scrapers_1.CompanyTypes.visaCal,
                 startDate: new Date('2020-01-01'),
-                combineInstallments: false,
-                showBrowser: true
+                showBrowser: false
             };
             // read documentation below for information about credentials
             const credentials = {

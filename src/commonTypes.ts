@@ -15,11 +15,12 @@ export interface Config {
   actual:{}
 }
 
+// TODO rethink optionals
 export interface AccountToScrapeConfig {
   companyID: CompanyTypes;
-  startDate: Date;
+  startDate?: Date;
   loginFields: ScraperCredentials;
-  showBrowser: boolean;
+  showBrowser?: boolean;
   active?: boolean;
 }
 

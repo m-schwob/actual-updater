@@ -1,4 +1,4 @@
-import keytar from 'keytar';
+import * as keytar from 'keytar';
 
 const serviceName = 'test'; // APP_NAME; TODO
 const accountName = 'crypto';

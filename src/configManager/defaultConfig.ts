@@ -1,6 +1,6 @@
 import { AccountToScrapeConfig, Config } from '../commonTypes';
 
-const DEFAULT_CONFIG: Config = {
+export const DEFAULT_CONFIG: Config = {
   account:{
     startDate : new Date('2020-01-01'),
     showBrowser: false
@@ -13,4 +13,4 @@ const DEFAULT_CONFIG: Config = {
 };
 
 
-export default DEFAULT_CONFIG;
+// export default DEFAULT_CONFIG;

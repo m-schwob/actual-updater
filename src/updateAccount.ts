@@ -19,9 +19,15 @@ rl.question('Please enter your service provider: ', (serviceProvider) => {
                 console.log(`Service Provider: ${serviceProvider}`);
                 console.log(`Password: ${password}`);
 
-                const CompanyType = CompanyTypes[serviceProvider as keyof typeof CompanyTypes];
                 let accontConfig: AccountToScrapeConfig = {
-                    companyID: CompanyType, loginFields: { username: username, password: password }
+                    options: {
+                        companyId: CompanyTypes[serviceProvider as keyof typeof CompanyTypes],
+                        startDate: new Date('2020-01-01')
+                    },
+                    loginFields: {
+                        username: username,
+                        password: password
+                    }
                 }
                 let config: Config = DEFAULT_CONFIG;
                 config.scraping.accountsToScrape.push(accontConfig)

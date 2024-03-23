@@ -1,6 +1,15 @@
 {
+  "type": "commonjs",
+  "scripts": {
+    "start": "ts-node-esm ./src/index.ts",
+    "config": "ts-node-esm ./src/updateAccount.ts",
+    "lint": "eslint . --max-warnings 0",
+    "build": "tsc",
+    "build-w": "tsc -w"
+  },
   "dependencies": {
     "@actual-app/api": "^6.2.1",
+    "crypto": "^1.0.1",
     "israeli-bank-scrapers": "^4.0.2",
     "keytar": "^7.9.0"
   }

@@ -2,7 +2,7 @@ import { existsSync, promises as fs } from 'fs';
 import { decrypt, encrypt } from './encryption/crypto';
 import { Config } from '../commonTypes';
 import { configFilePath } from '../app-globals';
-import configExample from './defaultConfig';
+import {DEFAULT_CONFIG} from './defaultConfig';
 
 export async function getConfig(configPath: string = configFilePath): Promise<Config> {
   const configFromFile = await getConfigFromFile(configPath);
@@ -13,7 +13,7 @@ export async function getConfig(configPath: string = configFilePath): Promise<Co
   }
 
   // Fallback to configExample if there is no config file defined at all
-  return configExample;
+  return DEFAULT_CONFIG;
 }
 
 export async function updateConfig(configPath: string, configToUpdate: Config): Promise<void> {

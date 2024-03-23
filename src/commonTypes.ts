@@ -1,4 +1,4 @@
-import { CompanyTypes, ScraperCredentials } from 'israeli-bank-scrapers';
+import { CompanyTypes, ScraperCredentials, ScraperOptions } from 'israeli-bank-scrapers';
 export type { ScaperScrapingResult } from 'israeli-bank-scrapers';
 
 export interface Config {
@@ -15,11 +15,12 @@ export interface Config {
   actual:{}
 }
 
+// TODO rethink optionals
 export interface AccountToScrapeConfig {
-  companyID: CompanyTypes;
-  startDate: Date;
+  options: ScraperOptions;
   loginFields: ScraperCredentials;
-  showBrowser: boolean;
+  startDate?: Date;
+  showBrowser?: boolean;
   active?: boolean;
 }
 

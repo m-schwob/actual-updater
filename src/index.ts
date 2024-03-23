@@ -3,21 +3,14 @@ import { Config } from './commonTypes';
 import { getConfig, updateConfig } from './configManager/configManager';
 import { configFilePath } from './app-globals';
 import  {DEFAULT_CONFIG}  from './configManager/defaultConfig';
+import {getAllAccountsResults} from './scraper'
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
-
-let config: Config = DEFAULT_CONFIG;
-updateConfig(configFilePath, config);
 
 async function main(): Promise<void> {
-    const foo = await getConfig();
-    console.log(foo)
+    const config = await getConfig();
+    console.log(config);
+    let result = await getAllAccountsResults(config);
+    console.log(result);
 }
 
-main()
-
-console.log('menash');
+main();

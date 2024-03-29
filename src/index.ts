@@ -11,44 +11,10 @@ async function main(): Promise<void> {
     const config = await getConfig();
     console.log(config);
     let result = await getAllAccountsResults(config);
-    // console.log(result);
-    
-    let api = require('@actual-app/api');
-    
-    await api.init({
-        // Budget data will be cached locally here, in subdirectories for each file.
-        dataDir: 'temp',
-        // This is the URL of your running server
-        serverURL: 'http://localhost:5006',
-        // This is the password you use to log into the server
-        password: 'actualtest',
-    });
 
-    // async function run() {
-    //     //   let acctId = await api.createAccount('test');
-    //       let acctId = '8a7fc0f0-f768-4369-ab6a-fb0f18f6b2db';
-    //       await api.addTransactions(
-    //         acctId,
-    //         [{account: acctId,
-    //             date: new Date('2024-03-20')}]
-    //       );
-    //   }
-      
-    //   api.runImport('My-Finances-d9e5d0a', run);
-
-
-
-    await api.downloadBudget('6a3ed3c3-f8d3-42be-b0cc-d310729c6df5');
-    // await api.loadBudget('My-Finances-d9e5d0a');
-    // await api.addTransactions(
-    //         '8a7fc0f0-f768-4369-ab6a-fb0f18f6b2db',
-    //         [{
-    //             account:'8a7fc0f0-f768-4369-ab6a-fb0f18f6b2db',
-    //             date: new Date('2024-03-15')}]
-    //         ).then(console.error);
-        
+    // console.log(JSON.stringify(result));
+    // let result = JSON.parse('[{ "txns": [], "accountNumber": "9412" }, { "txns": [{ "identifier": "25476209110", "type": "installments", "status": "completed", "date": "2024-03-28T01:34:09.000Z", "processedDate": "2024-04-01T21:00:00.000Z", "originalAmount": -94.31, "originalCurrency": "₪", "chargedAmount": -94.31, "chargedCurrency": "₪", "description": "סלקום שירות", "memo": "memo","installments":{"number":1,"total":3}, "category": "תקשורת ומחשבים" }, { "identifier": "25461488297", "type": "normal", "status": "completed", "date": "2024-03-26T10:49:27.000Z", "processedDate": "2024-04-01T21:00:00.000Z", "originalAmount": -265.5, "originalCurrency": "₪", "chargedAmount": -265.5, "chargedCurrency": "₪", "description": "מ. התחבורה - פנגו מוביט", "memo": "memo", "category": "מוסדות" }, { "identifier": "25454010633", "type": "installments", "status": "completed", "date": "2024-03-25T20:51:49.000Z", "processedDate": "2024-04-01T21:00:00.000Z", "originalAmount": -181, "originalCurrency": "₪", "chargedAmount": -181, "chargedCurrency": "₪", "description": "ויינר איטליאנו", "memo": "", "installments":{"number":1,"total":3}, "category": "מסעדות" }], "accountNumber": "2690" }, { "txns": [], "accountNumber": "5547" }]');
     await pushTransactions(result);
-    await api.shutdown();
 }
 
 main();

@@ -47,7 +47,7 @@ function mapTransactions(scrapedAccount: scraperTransactionsAccount): actualTran
         // TODO see if can do better assiment
         let actualTransaction: actualTransaction = {
             account: scrapedAccount.accountNumber,
-            date: scraperTransaction.date
+            date: scraperTransaction.date.split('T')[0] //TODO check if need date conversion 
         };
         // for (const [aKey, bKey] of Object.entries(transactionKeyMapping)) {
         //     actualTransaction[aKey] = scraperTransaction[bKey];
@@ -60,21 +60,18 @@ function mapTransactions(scrapedAccount: scraperTransactionsAccount): actualTran
 
 
 const accountMap: Record<string, string> = {
-    "test-account": "?34832y95",
+    "2690": "8a7fc0f0-f768-4369-ab6a-fb0f18f6b2db",
 }
 
 export async function pushTransactions(scrapedData: scraperTransactionsAccount[]) {
-    api.runWithBudget('test-budget', async () => {
-        // TODO handle a case where bank account not mapped to actual account
-        for (let accountData of scrapedData) {
-            //   let acctId = await api.createAccount(convertAccount(account));
-            let accountId = accountMap[accountData.accountNumber];
-            await api.importTransactions(
-                accountId,
-                mapTransactions(accountData)
-            );
-        }
-    });
+    // api.loadBudget('test-budget');
+    // TODO handle a case where bank account not mapped to actual account
+    for (let accountData of scrapedData) {
+        //   let acctId = await api.createAccount(convertAccount(account));
+        let accountId = accountMap[accountData.accountNumber];
+        if (accountId == undefined) continue; // TODO consider log or notify the user
+            await api.importTransactions(accountId, mapTransactions(accountData));
+    }
 }
 
 

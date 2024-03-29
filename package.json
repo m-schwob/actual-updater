@@ -8,7 +8,7 @@
     "build-w": "tsc -w"
   },
   "dependencies": {
-    "@actual-app/api": "^6.2.1",
+    "@actual-app/api": "^6.3.0",
     "crypto": "^1.0.1",
     "israeli-bank-scrapers": "^4.0.2",
     "keytar": "^7.9.0"

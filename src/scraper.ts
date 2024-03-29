@@ -19,13 +19,13 @@ async function getAccountResults(options: ScraperOptions, credentials: ScraperCr
 
 export async function getAllAccountsResults(config: Config): Promise<TransactionsAccount[]> {
     let transactionsAccount: TransactionsAccount[] = [];
-    config.scraping.accountsToScrape.forEach((async account => {
+    for(const account of config.scraping.accountsToScrape){ //TODO make sure it doing it parallel and not serial
+        account.options.startDate = new Date('2024-03-25'); // TODO remove
         let accounts: TransactionsAccount[] | undefined = await getAccountResults(account.options, account.loginFields)
         if (accounts != undefined) {
-            transactionsAccount.concat(accounts)
+            transactionsAccount.push(...accounts)
         }
     }
-    ));
     return transactionsAccount;
 }
 

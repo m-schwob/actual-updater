@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@actual-app/api@^6.2.1":
+"@actual-app/api@^6.3.0":
   version "6.6.0"
   resolved "https://registry.yarnpkg.com/@actual-app/api/-/api-6.6.0.tgz#8ece3aed714e81a838b41b489b9c02756cddf3e3"
   integrity sha512-PR+mnau9OZSPltHSTuUBT8T+sxpb3IHKIBm5wfc/xxsl/4VPP95Z0obNNrSak/hWLqe+YMyILcHfhz2KiiGxDg==

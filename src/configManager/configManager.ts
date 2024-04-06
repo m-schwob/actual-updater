@@ -17,7 +17,9 @@ export async function getConfig(configPath: string = configFilePath): Promise<Co
 }
 
 export async function updateConfig(configPath: string, configToUpdate: Config): Promise<void> {
-  const stringifiedConfig = JSON.stringify(configToUpdate, null, 2);
+  const currentConfig = await getConfig(configPath);
+  currentConfig.scraping.accountsToScrape = currentConfig.scraping.accountsToScrape.concat(configToUpdate.scraping.accountsToScrape)
+  const stringifiedConfig = JSON.stringify(currentConfig, null, 2);
   const encryptedConfigStr = await encrypt(stringifiedConfig);
   await fs.writeFile(configPath, encryptedConfigStr);
 }

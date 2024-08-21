@@ -12,5 +12,6 @@
     "crypto": "^1.0.1",
     "israeli-bank-scrapers": "^4.0.2",
     "keytar": "^7.9.0"
-  }
+  },
+  "version": "0.0.0"
 }

@@ -3,6 +3,9 @@ let api = require('@actual-app/api');
 import { TransactionTypes, Transaction as scraperTransaction, TransactionsAccount as scraperTransactionsAccount } from 'israeli-bank-scrapers/lib/transactions';
 import { accountMapFilePath } from './app-globals';
 import { getConfigFromFile } from './configManager/configManager';
+import { existsSync, promises as fs } from 'fs';
+
+
 
 // TODO: seems that actual-app/api does not expoprt type for Transaction so I drecleard it here. verifiy it.
 type actualTransaction = {
@@ -102,9 +105,22 @@ export async function pushTransactions(scrapedData: scraperTransactionsAccount[]
 
     // TODO handle a case where bank account not mapped to actual account
     for (let accountData of scrapedData) {
+        let accountNumber = accountData.accountNumber;
+        let accountId;
+        if(accountNumber in accountMap){
         //   let acctId = await api.createAccount(convertAccount(account));
-        let accountId = accountMap[accountData.accountNumber];
-        if (accountId == undefined) continue; // TODO consider log or notify the user
+            accountId = accountMap[accountNumber];
+        }
+        else{
+            accountId = await api.createAccount({
+                name: accountNumber,
+                type: "savings"
+              });
+            accountMap[accountNumber] = accountId;
+            const stringAccountMap = JSON.stringify(accountMap, null, 2);
+            await fs.writeFile(accountMapFilePath, stringAccountMap);
+        }
+
         await api.importTransactions(accountId, mapTransactions(accountData));
     }
     await api.shutdown();

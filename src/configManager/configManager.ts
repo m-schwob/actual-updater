@@ -17,17 +17,19 @@ export async function getConfig(configPath: string = configFilePath): Promise<Co
 }
 
 export async function updateConfig(configPath: string, configToUpdate: Config): Promise<void> {
-  const stringifiedConfig = JSON.stringify(configToUpdate, null, 2);
+  const currentConfig = await getConfig(configPath);
+  currentConfig.scraping.accountsToScrape = currentConfig.scraping.accountsToScrape.concat(configToUpdate.scraping.accountsToScrape)
+  const stringifiedConfig = JSON.stringify(currentConfig, null, 2);
   const encryptedConfigStr = await encrypt(stringifiedConfig);
   await fs.writeFile(configPath, encryptedConfigStr);
 }
 
-async function getConfigFromFile(configPath: string) {
+export async function getConfigFromFile(configPath: string) {
   if (existsSync(configPath)) {
     return fs.readFile(configPath, {
       encoding: 'utf8'
     });
   }
-  return null;
+  return '';
 }
 

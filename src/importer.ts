@@ -1,6 +1,8 @@
 // import {importTransactions, runWithBudget, createAccount,convertAccount} from '@actual-app/api';
 let api = require('@actual-app/api');
 import { TransactionTypes, Transaction as scraperTransaction, TransactionsAccount as scraperTransactionsAccount } from 'israeli-bank-scrapers/lib/transactions';
+import { accountMapFilePath } from './app-globals';
+import { getConfigFromFile } from './configManager/configManager';
 
 // TODO: seems that actual-app/api does not expoprt type for Transaction so I drecleard it here. verifiy it.
 type actualTransaction = {
@@ -82,12 +84,6 @@ function mapTransactions(scrapedAccount: scraperTransactionsAccount): actualTran
 }
 
 
-
-const accountMap: Record<string, string> = {
-    "2690": "8a7fc0f0-f768-4369-ab6a-fb0f18f6b2db",
-}
-
-
 export async function pushTransactions(scrapedData: scraperTransactionsAccount[]) {
     await api.init({
         // Budget data will be cached locally here, in subdirectories for each file.
@@ -99,7 +95,10 @@ export async function pushTransactions(scrapedData: scraperTransactionsAccount[]
     });
 
     // download and load budget
-    await api.downloadBudget('6a3ed3c3-f8d3-42be-b0cc-d310729c6df5');
+    //settings -> syncid
+    await api.downloadBudget('a966a0e2-a915-4759-b55b-d3623b1d8ddb');
+    const accountMapStr = await getConfigFromFile(accountMapFilePath);
+    const accountMap = JSON.parse(accountMapStr);
 
     // TODO handle a case where bank account not mapped to actual account
     for (let accountData of scrapedData) {
@@ -111,6 +110,3 @@ export async function pushTransactions(scrapedData: scraperTransactionsAccount[]
     await api.shutdown();
 
 }
-
-
-

@@ -24,12 +24,12 @@ export async function updateConfig(configPath: string, configToUpdate: Config): 
   await fs.writeFile(configPath, encryptedConfigStr);
 }
 
-async function getConfigFromFile(configPath: string) {
+export async function getConfigFromFile(configPath: string) {
   if (existsSync(configPath)) {
     return fs.readFile(configPath, {
       encoding: 'utf8'
     });
   }
-  return null;
+  return '';
 }
 

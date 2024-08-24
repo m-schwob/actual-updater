@@ -1,4 +1,12 @@
 {
+  "name": "actual-updater",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Provide Sync services between all major Israeli banks and credit card companies, to the Actual app",
+  "engines": {
+    "node": ">= 18.19.0"
+  },
+  "license": "MIT",
   "type": "commonjs",
   "scripts": {
     "start": "ts-node ./src/index.ts",
@@ -11,6 +19,5 @@
     "@actual-app/api": "^6.9.0",
     "israeli-bank-scrapers": "^5.1.1",
     "keytar": "^7.9.0"
-  },
-  "version": "0.0.0"
+  }
 }

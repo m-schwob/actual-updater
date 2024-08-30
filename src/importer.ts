@@ -83,8 +83,6 @@ export async function pushTransactions(scrapedData: scraperTransactionsAccount[]
             await updateBudget(budget, accountMap, scrapedData);
         }
     }   
-    await api.shutdown();
-
 }
 
 async function updateBudget(budget: any, accountMap: any, scrapedData: scraperTransactionsAccount[]) {
@@ -93,6 +91,7 @@ async function updateBudget(budget: any, accountMap: any, scrapedData: scraperTr
     for (let accountData of scrapedData) {
         await updateAccount(accountData, budgetaccounts, accountMap);
     }
+    await api.shutdown();
 }
 
 async function updateAccount(accountData: scraperTransactionsAccount, budgetaccounts: any, accountMap: any) {

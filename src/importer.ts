@@ -7,7 +7,6 @@ import { existsSync, promises as fs } from 'fs';
 
 
 
-// TODO: seems that actual-app/api does not expoprt type for Transaction so I drecleard it here. verifiy it.
 type actualTransaction = {
     id?: string;
     account: string;
@@ -28,14 +27,10 @@ type Mapper<T1, T2> = {
     [key in keyof T1]: keyof T2;
 }
 
-// TODO verify mapping
 const transactionKeyMapping: Mapper<actualTransaction, scraperTransaction> = {
-    // id:
     'account': 'identifier',
     'date': 'date',
     'amount': 'chargedAmount',
-    // payee:,
-    // payee_name:,
     'imported_payee': 'processedDate',
     'category': 'category',
     'notes': 'memo',
@@ -59,28 +54,16 @@ function mapTransactions(scrapedAccount: scraperTransactionsAccount): actualTran
         if(scraperTransaction.memo){
             notes.push(scraperTransaction.memo)
         }
-
-        // if(scraperTransaction.chargedCurrency != '₪') TODO notify the user
-        
-        // TODO see if can do better assignment
         let actualTransaction: actualTransaction = {
-            // id:,
             account: scrapedAccount.accountNumber,
             date: scraperTransaction.date.split('T')[0], // TODO check if need date conversion 
             amount: api.utils.amountToInteger(scraperTransaction.chargedAmount),
-            // payee:,
             payee_name: scraperTransaction.description, // TODO consider mapping
             imported_payee: scraperTransaction.description,
-            // category: scraperTransaction.category, // TODO consider mapping category
             notes: notes.join(', '),
             imported_id: scraperTransaction.identifier?.toString(),
-            // transfer_id:,
             cleared: false
-            // subtransactions:,
         };
-        // for (const [aKey, bKey] of Object.entries(transactionKeyMapping)) {
-        //     actualTransaction[aKey] = scraperTransaction[bKey];
-        // }
         actualTranscations.push(actualTransaction);
     }
     return actualTranscations;
@@ -89,40 +72,58 @@ function mapTransactions(scrapedAccount: scraperTransactionsAccount): actualTran
 
 export async function pushTransactions(scrapedData: scraperTransactionsAccount[]) {
     await api.init({
-        // Budget data will be cached locally here, in subdirectories for each file.
-        dataDir: 'temp',
-        // This is the URL of your running server
-        serverURL: 'http://localhost:5006',
-        // This is the password you use to log into the server
+        serverURL: 'https://actual.menashtech.com',
         password: 'actualtest',
     });
 
-    // download and load budget
-    //settings -> syncid
-    await api.downloadBudget('a966a0e2-a915-4759-b55b-d3623b1d8ddb');
-    const accountMapStr = await getConfigFromFile(accountMapFilePath);
-    const accountMap = JSON.parse(accountMapStr);
+    const accountMap = await getAccounts();
+    let budgets = await api.getBudgets();
+    for (let budget of budgets) {
+        if (budget.state == "remote") {
+            await updateBudget(budget, accountMap, scrapedData);
+        }
+    }   
+    await api.shutdown();
 
-    // TODO handle a case where bank account not mapped to actual account
+}
+
+async function updateBudget(budget: any, accountMap: any, scrapedData: scraperTransactionsAccount[]) {
+    await api.downloadBudget(budget.groupId);
+    let budgetaccounts = accountMap[budget.name];
     for (let accountData of scrapedData) {
+        await updateAccount(accountData, budgetaccounts, accountMap);
+    }
+}
+
+async function updateAccount(accountData: scraperTransactionsAccount, budgetaccounts: any, accountMap: any) {
         let accountNumber = accountData.accountNumber;
         let accountId;
-        if(accountNumber in accountMap){
-        //   let acctId = await api.createAccount(convertAccount(account));
-            accountId = accountMap[accountNumber];
-        }
-        else{
+    if (accountNumber in budgetaccounts) {
+        accountId = budgetaccounts[accountNumber];
+    }
+    else {
+        accountId = await addAccountToBudget(accountId, accountNumber, budgetaccounts, accountMap);
+    }
+    await api.importTransactions(accountId, mapTransactions(accountData));
+}
+
+async function addAccountToBudget(accountId: any, accountNumber: string, budgetaccounts: any, accountMap: any) {
             accountId = await api.createAccount({
                 name: accountNumber,
                 type: "savings"
               });
-            accountMap[accountNumber] = accountId;
+    budgetaccounts[accountNumber] = accountId;
+    await saveAccountMap(accountMap);
+    return accountId;
+}
+
+async function saveAccountMap(accountMap: any) {
             const stringAccountMap = JSON.stringify(accountMap, null, 2);
             await fs.writeFile(accountMapFilePath, stringAccountMap);
         }
 
-        await api.importTransactions(accountId, mapTransactions(accountData));
-    }
-    await api.shutdown();
-
+async function getAccounts() {
+    const accountMapStr = await getConfigFromFile(accountMapFilePath);
+    const accountMap = JSON.parse(accountMapStr);
+    return accountMap;
 }

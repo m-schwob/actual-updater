@@ -7,3 +7,14 @@
 #### ts-node-esm
 - [From node v18.19.0 `ts-node-esm` break](https://github.com/TypeStrong/ts-node/issues/2110). so switched to use `ts-node` instead.
 - Trying to config the package.json and tsconfig.json to use ESM modules does not work so we stick with `"module": "CommonJS"` as  israeli-bank-scraper does. 
+
+#### docker image
+- The image is currently public for reading at [ghcr.io/m-schwob/actual-updater:latest]()
+- To upload a new image, there is need to setup the docker with a token (my mc should be configured).
+- To upload new image:  
+    - build the image by running `docker build -t actual-updater .`
+    - upload the image by running 
+    ```
+    docker tag my-image:latest ghcr.io/m-schwob/actual-updater:latest
+    docker push ghcr.io/m-schwob/actual-updater:latest
+    ```

@@ -80,49 +80,38 @@ export async function pushTransactions(scrapedData: scraperTransactionsAccount[]
     let budgets = await api.getBudgets();
     for (let budget of budgets) {
         if (budget.state == "remote") {
-            await updateBudget(budget, accountMap, scrapedData);
+            await updateBudget(budget, scrapedData);
         }
     }   
 }
 
-async function updateBudget(budget: any, accountMap: any, scrapedData: scraperTransactionsAccount[]) {
+async function updateBudget(budget: any, scrapedData: scraperTransactionsAccount[]) {
     await api.downloadBudget(budget.groupId);
-    let budgetaccounts = accountMap[budget.name];
+    let accounts = await api.getAccounts();
     for (let accountData of scrapedData) {
-        await updateAccount(accountData, budgetaccounts, accountMap);
+        let budgetAccount = accounts.find((account: any) => account.name == accountData.accountNumber);
+        await updateAccount(accountData, budgetAccount);
     }
     await api.shutdown();
 }
 
-async function updateAccount(accountData: scraperTransactionsAccount, budgetaccounts: any, accountMap: any) {
+async function updateAccount(accountData: scraperTransactionsAccount, budgetaccount: any) {
         let accountNumber = accountData.accountNumber;
         let accountId;
-    if (accountNumber in budgetaccounts) {
-        accountId = budgetaccounts[accountNumber];
+    if (budgetaccount) {
+        accountId = budgetaccount.id;
     }
     else {
-        accountId = await addAccountToBudget(accountId, accountNumber, budgetaccounts, accountMap);
+        accountId = await addAccountToBudget(accountNumber);
     }
     await api.importTransactions(accountId, mapTransactions(accountData));
 }
 
-async function addAccountToBudget(accountId: any, accountNumber: string, budgetaccounts: any, accountMap: any) {
-            accountId = await api.createAccount({
+async function addAccountToBudget(accountNumber: string) {
+    let accountId = await api.createAccount({
                 name: accountNumber,
-                type: "savings"
+        type: "savings",
+        id: accountNumber
               });
-    budgetaccounts[accountNumber] = accountId;
-    await saveAccountMap(accountMap);
     return accountId;
-}
-
-async function saveAccountMap(accountMap: any) {
-            const stringAccountMap = JSON.stringify(accountMap, null, 2);
-            await fs.writeFile(accountMapFilePath, stringAccountMap);
-        }
-
-async function getAccounts() {
-    const accountMapStr = await getConfigFromFile(accountMapFilePath);
-    const accountMap = JSON.parse(accountMapStr);
-    return accountMap;
 }

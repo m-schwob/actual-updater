@@ -72,10 +72,11 @@ function mapTransactions(scrapedAccount: scraperTransactionsAccount): actualTran
 
 export async function pushTransactions(scrapedData: scraperTransactionsAccount[]) {
     await api.init({
-        serverURL: 'https://actual.menashtech.com',
-        password: 'actualtest',
-    });
+        serverURL: 'http://localhost:5006',
+        password: 'password',
+        dataDir: './budgets'
 
+    });
     const accountMap = await getAccounts();
     let budgets = await api.getBudgets();
     for (let budget of budgets) {
@@ -87,6 +88,10 @@ export async function pushTransactions(scrapedData: scraperTransactionsAccount[]
 
 async function updateBudget(budget: any, accountMap: any, scrapedData: scraperTransactionsAccount[]) {
     await api.downloadBudget(budget.groupId);
+    if (!(budget.name in accountMap)){
+        accountMap[budget.name] = {};
+        await saveAccountMap(accountMap);
+    }
     let budgetaccounts = accountMap[budget.name];
     for (let accountData of scrapedData) {
         await updateAccount(accountData, budgetaccounts, accountMap);

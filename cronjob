@@ -1,2 +1,3 @@
 # Run script at 7:00 AM and 4:00 PM
+# minute hour day month week user command
 0 7,16 * * * root yarn start

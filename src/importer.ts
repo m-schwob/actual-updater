@@ -100,8 +100,8 @@ async function updateBudget(budget: any, accountMap: any, scrapedData: scraperTr
 }
 
 async function updateAccount(accountData: scraperTransactionsAccount, budgetaccounts: any, accountMap: any) {
-        let accountNumber = accountData.accountNumber;
-        let accountId;
+    let accountNumber = accountData.accountNumber;
+    let accountId;
     if (accountNumber in budgetaccounts) {
         accountId = budgetaccounts[accountNumber];
     }
@@ -112,19 +112,19 @@ async function updateAccount(accountData: scraperTransactionsAccount, budgetacco
 }
 
 async function addAccountToBudget(accountId: any, accountNumber: string, budgetaccounts: any, accountMap: any) {
-            accountId = await api.createAccount({
-                name: accountNumber,
-                type: "savings"
-              });
+    accountId = await api.createAccount({
+        name: accountNumber,
+        type: "savings"
+    });
     budgetaccounts[accountNumber] = accountId;
     await saveAccountMap(accountMap);
     return accountId;
 }
 
 async function saveAccountMap(accountMap: any) {
-            const stringAccountMap = JSON.stringify(accountMap, null, 2);
-            await fs.writeFile(accountMapFilePath, stringAccountMap);
-        }
+    const stringAccountMap = JSON.stringify(accountMap, null, 2);
+    await fs.writeFile(accountMapFilePath, stringAccountMap);
+}
 
 async function getAccounts() {
     const accountMapStr = await getConfigFromFile(accountMapFilePath);

@@ -1,6 +1,9 @@
 # Use the official Node.js image
 FROM node:18.19.0
 
+# Install libsecret-1-dev. used by keytar
+RUN apt-get update && apt-get install -y libsecret-1-dev
+
 # Install Yarn via the official script
 RUN curl -fsSL https://install.yarnpkg.com | bash
 

@@ -1,8 +1,0 @@
-FROM node:latest
-
-# Install cron
-RUN apt-get update && apt-get install -y cron
-
-COPY cronjob /etc/cron.d/cronjob
-
-CMD ["cron", "-f"]

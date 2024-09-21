@@ -1,7 +1,7 @@
 // import {importTransactions, runWithBudget, createAccount,convertAccount} from '@actual-app/api';
 let api = require('@actual-app/api');
 import { TransactionTypes, Transaction as scraperTransaction, TransactionsAccount as scraperTransactionsAccount } from 'israeli-bank-scrapers/lib/transactions';
-import { accountMapFilePath } from './app-globals';
+import { accountMapFilePath ,checkAndCreateFolder} from './app-globals';
 import { getConfigFromFile } from './configManager/configManager';
 import { existsSync, promises as fs } from 'fs';
 
@@ -71,6 +71,7 @@ function mapTransactions(scrapedAccount: scraperTransactionsAccount): actualTran
 
 
 export async function pushTransactions(scrapedData: scraperTransactionsAccount[]) {
+    checkAndCreateFolder('./budgets');
     await api.init({
         serverURL: 'http://localhost:5006',
         password: 'password',

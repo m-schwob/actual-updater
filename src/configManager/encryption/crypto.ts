@@ -25,11 +25,3 @@ export function generateIv(): Buffer {
   return crypto.randomBytes(IV_SIZE);
 }
 
-export function extractIV(fileContent: string): [Buffer, string] {
-  const [ivHex, encryptedConfig] = fileContent.split(':');
-  return [Buffer.from(ivHex, 'hex'), encryptedConfig];
-}
-
-export function prependIv(iv: Buffer, encryptedConfig: string): string {
-  return iv.toString('hex') + ':' + encryptedConfig;
-}

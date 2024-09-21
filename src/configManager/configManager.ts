@@ -1,5 +1,5 @@
 import { existsSync, promises as fs } from 'fs';
-import { decrypt, encrypt, extractIV, generateIv, prependIv, generateKey } from './encryption/crypto';
+import { decrypt, encrypt, generateIv} from './encryption/crypto';
 import { Config } from '../commonTypes';
 import { configFilePath } from '../app-globals';
 import { DEFAULT_CONFIG } from './defaultConfig';
@@ -8,11 +8,10 @@ import getKey from './encryption/keytar';
 export async function getConfig(configPath: string = configFilePath): Promise<Config> {
   const fileContent = await getConfigFromFile(configPath);
 
-  if (fileContent) {
-    const [iv, encryptedConfig] = extractIV(fileContent);
+  if (fileContent && "iv" in fileContent && "config" in fileContent) {
     const key = await getKey();
-
-    const decryptedConfig = await decrypt(encryptedConfig, key, iv) as string;
+    const iv = Buffer.from(fileContent.iv, 'hex')
+    const decryptedConfig = await decrypt(fileContent.config, key, iv) as string;
     return JSON.parse(decryptedConfig);
   }
 
@@ -28,15 +27,22 @@ export async function updateConfig(configPath: string, configToUpdate: Config): 
   const key = await getKey();
   const iv = generateIv();
   const encryptedConfig = await encrypt(stringifiedConfig, key, iv);
-  const fileContent = prependIv(iv, encryptedConfig);
+
+  const fileContent = JSON.stringify({
+    iv: iv.toString("hex"),
+    config: encryptedConfig
+  })
   await fs.writeFile(configPath, fileContent);
 }
 
 export async function getConfigFromFile(configPath: string) {
   if (existsSync(configPath)) {
-    return fs.readFile(configPath, {
+    const stringfile = await fs.readFile(configPath, {
       encoding: 'utf8'
     });
+    return JSON.parse(stringfile);
   }
-  return '';
+  else{
+    return {};
+  }
 }

@@ -128,7 +128,6 @@ async function saveAccountMap(accountMap: any) {
 }
 
 async function getAccounts() {
-    const accountMapStr = await getConfigFromFile(accountMapFilePath);
-    const accountMap = JSON.parse(accountMapStr);
+    const accountMap = await getConfigFromFile(accountMapFilePath);
     return accountMap;
 }

@@ -15,6 +15,6 @@
     - build the image by running `docker build -t actual-updater .`
     - upload the image by running 
     ```
-    docker tag my-image:latest ghcr.io/m-schwob/actual-updater:latest
+    docker tag actual-updater:latest ghcr.io/m-schwob/actual-updater:latest
     docker push ghcr.io/m-schwob/actual-updater:latest
     ```

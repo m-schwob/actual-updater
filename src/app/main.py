@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from nicegui import ui
 
-from ui import start_ui  # your UI setup function
+from ui import AccountsManagerUI  # your UI setup function
 
 # Create FastAPI app
 app = FastAPI()
@@ -9,9 +9,7 @@ app = FastAPI()
 # Bind FastAPI to NiceGUI
 ui.run_with(app)
 
-# Call your UI setup function (registers pages/components)
-start_ui()
+# Instantiate and start the UI
+password_manager_ui = AccountsManagerUI(account_list=["Bank A", "Bank B", "Bank C"])
+ui.page('/')(password_manager_ui.start_ui)
 
-# Start the app
-if __name__ == '__main__':
-    ui.run()

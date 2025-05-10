@@ -3,7 +3,7 @@ import keyring
 import argparse
 from cryptography.fernet import Fernet, InvalidToken
 
-from utils.constants import SERVICE_NAME
+from src.utils.constants import SERVICE_NAME
 
 
 def get_fernet(key_id: str) -> Fernet:

@@ -1,0 +1,21 @@
+{
+    "npm.packageManager": "yarn",
+    "cSpell.words": [
+        "authelia",
+        "Fernet"
+    ],
+    "cSpell.ignorePaths": [
+        "package-lock.json",
+        "node_modules",
+        "tests/docker/authelia/authelia.log"
+    ],
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
+}

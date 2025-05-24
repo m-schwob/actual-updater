@@ -1,7 +1,6 @@
 fastapi
-uvicorn[standard]
-jinja2
-python-multipart
 nicegui
+authlib 
+uvicorn[standard]
 cryptography
  

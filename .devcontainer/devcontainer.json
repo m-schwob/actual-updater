@@ -1,0 +1,19 @@
+{
+    "name": "actual-updater-dev",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },
+    "forwardPorts": [
+        5006,
+        9091
+    ],
+    "postCreateCommand": "yarn install",
+    "customizations": {
+        "vscode": {
+            "settings": {},
+            "extensions": [
+                "esbenp.prettier-vscode"
+            ]
+        }
+    }
+}

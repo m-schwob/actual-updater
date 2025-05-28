@@ -1,12 +1,13 @@
-host: 0.0.0.0
-port: 9091
+server:
+  host: 0.0.0.0
+  port: 9091
 
 jwt_secret: "supersecretjwt"
 
 storage:
   encryption_key: "verylongsupersecretkey"
   local:
-    path: /data/db.sqlite3
+    path: /var/lib/authelia/db.sqlite3
 
 notifier:
   filesystem:
@@ -14,9 +15,6 @@ notifier:
 
 access_control:
   default_policy: one_factor
-  rules:
-    - domain: "127.0.0.1"
-      policy: one_factor
 
 session:
   name: authelia_session
@@ -27,6 +25,7 @@ session:
 
 identity_providers:
   oidc:
+    enable_client_debug_messages: true
     jwks:
       - key_id: 'oid_id'
         algorithm: 'RS256'
@@ -61,10 +60,9 @@ identity_providers:
           MZbbjJQ5cIL1U66DA//dajI=
           -----END PRIVATE KEY-----
     clients:
-      - id: your-client-id
-        description: FastAPI Test Client
-        secret: your-client-secret
-        public: false
+      - client_id: updater-client-id
+        client_name: 'Actual Updater'
+        client_secret: updater-client-secret
         authorization_policy: one_factor
         redirect_uris:
           - "http://127.0.0.1:8000/oidc/callback"
@@ -74,11 +72,26 @@ identity_providers:
           - groups
         userinfo_signed_response_alg: none
         consent_mode: implicit
-    enable_client_debug_messages: true
+        public: false
+
+      - client_id: actual-client-id
+        client_name: 'Actual Budget'
+        client_secret: 'actual_client_secret'
+        authorization_policy: one_factor
+        redirect_uris:
+          - http://127.0.0.1:5006/openid/callback
+        scopes:
+          - openid
+          - email
+          - profile
+          - groups
+        userinfo_signed_response_alg: none
+        consent_mode: implicit
+        public: false
 
 authentication_backend:
   file:
-    path: /data/users.yaml
+    path: /app/.devcontainer/authelia/users.yaml
 
 log:
   level: debug

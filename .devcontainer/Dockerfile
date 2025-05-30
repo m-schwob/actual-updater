@@ -1,7 +1,8 @@
 FROM node:20
 
-# Install dependencies
-RUN apt-get update && apt-get install -y wget python3 python3-pip \
+# Install dependencies and Supervisor in one step, then clean up apt cache
+RUN apt-get update \
+    && apt-get install -y wget python3 python3-pip supervisor \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Authelia
@@ -16,27 +17,11 @@ RUN wget -O /tmp/$AUTHELIA_BINARY.tar.gz https://github.com/authelia/authelia/re
     && mkdir -p /var/log/authelia /var/lib/authelia \
     && rm -r /tmp
 
-# Install Actual server globallyst iy
-# RUN npm install --location=global @actual-app/sync-server
+# Install Actual server globally
+RUN npm install --location=global @actual-app/sync-server
 
-# Install Actual Updater locally
-# RUN yarn install
+# Set workdir to VS Code default workspace mount for devcontainer
+WORKDIR /workspaces/actual-updater
 
-# Create symlinks for Authelia and Actual config files
-# RUN ln -sf /app/authelia-config.yml /etc/authelia/config.yml \
-#     && ln -sf /app/actual-config.json /etc/actual/config.json
-
-# Copy and install Python requirements
-# COPY ../requirements.txt /tmp/requirements.txt
-# RUN python3 -m pip install --upgrade pip #&& python3 -m pip install -r /tmp/requirements.txt
-
-# Create workdir for Actual Updater
-WORKDIR /app
-COPY . .
-
-# # Optional: Add supervisord or entrypoint script
-# COPY ./start.sh /start.sh
-# RUN chmod +x /start.sh
-
-# Set default command to bash to keep container running
-CMD ["bash -c"]
+# Set default command to run supervisord, which will manage Actual and Authelia
+CMD ["/usr/bin/supervisord", "-c", "/workspaces/actual-updater/.devcontainer/supervisord.conf"]

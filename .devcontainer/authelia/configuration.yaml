@@ -91,7 +91,7 @@ identity_providers:
 
 authentication_backend:
   file:
-    path: /app/.devcontainer/authelia/users.yaml
+    path: /workspaces/actual-updater/.devcontainer/authelia/users.yaml
 
 log:
   level: debug

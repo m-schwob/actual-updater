@@ -2,7 +2,8 @@
     "npm.packageManager": "yarn",
     "cSpell.words": [
         "authelia",
-        "Fernet"
+        "Fernet",
+        "supervisord"
     ],
     "cSpell.ignorePaths": [
         "package-lock.json",

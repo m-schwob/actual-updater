@@ -12,8 +12,8 @@ app.add_middleware(SessionMiddleware, secret_key="your-secret-key")
 oauth = OAuth()
 oauth.register(
     name='authelia',
-    client_id='your-client-id',
-    client_secret='your-client-secret',
+    client_id='updater-client-id',
+    client_secret='updater-client-secret',
     server_metadata_url='http://127.0.0.1:9091/.well-known/openid-configuration',
     client_kwargs={
         'scope': 'openid profile groups'

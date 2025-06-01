@@ -3,6 +3,7 @@
     "cSpell.words": [
         "authelia",
         "Fernet",
+        "supervisorctl",
         "supervisord"
     ],
     "cSpell.ignorePaths": [

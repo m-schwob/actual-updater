@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Restart Authelia Service",
+            "type": "shell",
+            "command": "supervisorctl restart authelia",
+            "args": [],
+            "group": "none",
+            "isBackground": false,
+            "problemMatcher": []
+        },
+        {
+            "label": "Restart Actual-Server Service",
+            "type": "shell",
+            "command": "supervisorctl restart actual-server",
+            "args": [],
+            "group": "none",
+            "isBackground": false,
+            "problemMatcher": []
+        }
+    ]
+}

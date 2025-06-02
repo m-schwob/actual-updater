@@ -60,9 +60,9 @@ identity_providers:
           MZbbjJQ5cIL1U66DA//dajI=
           -----END PRIVATE KEY-----
     clients:
-      - client_id: updater-client-id
+      - client_id: actual-updater-client-id
         client_name: 'Actual Updater'
-        client_secret: updater-client-secret
+        client_secret: actual-updater-client-secret
         authorization_policy: one_factor
         redirect_uris:
           - "http://127.0.0.1:8000/oidc/callback"

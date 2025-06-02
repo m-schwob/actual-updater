@@ -58,7 +58,7 @@
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "src.app.oidc:app",
+                "src.app.main:app",
                 "--reload"
             ]
         }

@@ -19,12 +19,17 @@ access_control:
 session:
   name: authelia_session
   secret: "sessionsecret"
-  expiration: 3600
-  inactivity: 300
+  # expiration: 1h     # Absolute session expiration
+  # inactivity: 5m     # Inactivity timeout
   domain: 127.0.0.1
 
 identity_providers:
   oidc:
+    # lifespans:
+    #   access_token: '1h'
+    #   authorize_code: '1m'
+    #   id_token: '1h'
+    #   refresh_token: '90m'
     enable_client_debug_messages: true
     jwks:
       - key_id: 'oid_id'

@@ -1,8 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from authlib.integrations.starlette_client import OAuth, StarletteOAuth2App
-from authlib.integrations.base_client.errors import InvalidTokenError
-import httpx
 
 
 class OIDCAuth:
@@ -40,42 +38,39 @@ class OIDCAuth:
             request.session['user'] = dict(userinfo)
             request.session['authelia_session'] = request.cookies['authelia_session']
             return RedirectResponse(url='/')
-           
+
         @self.app.get('/logout')
         async def logout(request: Request):
             request.session.clear()
             return RedirectResponse(url='/')
-                     
+
     def _register_oidc_middleware(self):
         @self.app.middleware('http')
         async def oidc_middleware(request: Request, call_next):
             if request.url.path in ['/login', '/oidc/callback', '/logout']:
                 return await call_next(request)
-            if await self._verify_authelia_session(request):
-                provider: StarletteOAuth2App = self.oauth.authelia
-                token = request.session.get('token')
-                try:
-                    userinfo = await provider.userinfo(token=token) # validate the user token
-                except InvalidTokenError:
-                    pass
-                if userinfo:
-                    return await call_next(request)
+            if self._validate_authelia_session(request) and await self._validate_access_token(request):
+                return await call_next(request)
             request.session.clear()
             return RedirectResponse(url='/login') 
-     
-    async def _verify_authelia_session(self, request: Request):
+
+    def _validate_authelia_session(self, request: Request):
         authelia_session = request.cookies.get('authelia_session')
         if not authelia_session or authelia_session != request.session.get('authelia_session'):
             return False
-        
-        # async with httpx.AsyncClient() as client:
-        #     response = await client.get(
-        #         f"{self.server_url.rstrip('/')}/api/verify", headers={
-        #             'Cookie': f'authelia_session={authelia_session}'
-        #         }
-        #     )
-        #     if response.status_code != 200:
-        #         return False
+
+        # TODO consider validating the session cookie with Authelia server. see if it still needed after the will
+        # implement the logout PR/frontend/backend options
+
         return True
-            
-                
+
+    async def _validate_access_token(self, request:Request):
+        provider: StarletteOAuth2App = self.oauth.authelia
+        token = request.session.get('token')
+        try:
+            userinfo = await provider.userinfo(token=token) # validate the user token
+        except Exception:
+            return False
+        if userinfo and userinfo.get('sub') == request.session.get('user', {}).get('sub'):
+            return True
+        return False

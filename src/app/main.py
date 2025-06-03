@@ -39,20 +39,20 @@ def updater_page(request: Request):
 BUDGETS_DATA = {
     "Pizza Party Fund": {
         "accounts": [
-            {"bank": "Bank Hapoalim", "account": "Checking"},
-            {"bank": "Bank Leumi", "account": "Savings"},
+            {"bank_name": "Bank Hapoalim", "account": "Checking"},
+            {"bank_name": "Bank Leumi", "account": "Savings"},
         ]
     },
     "Secret Vacation Stash": {
         "accounts": [
-            {"bank": "Mizrahi Bank", "account": "Investment"},
-            {"bank": "Discount Bank", "account": "Business"},
-            {"bank": "Mercantile Bank", "account": "Joint"},
+            {"bank_name": "Mizrahi Bank", "account": "Investment"},
+            {"bank_name": "Discount Bank", "account": "Business"},
+            {"bank_name": "Mercantile Bank", "account": "Joint"},
         ]
     },
     "Emergency Unicorn Fund": {
         "accounts": [
-            {"bank": "Bank Otsar Hahayal", "account": "Credit Card"},
+            {"bank_name": "Bank Otsar Hahayal", "account": "Credit Card"},
         ]
     },
 }

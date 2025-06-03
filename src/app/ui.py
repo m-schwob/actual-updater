@@ -1,6 +1,7 @@
 from nicegui import ui
 
 from src.app import constants
+from nicegui.events import ValueChangeEventArguments
 
 # Theme colors
 PAGE_BG = '#243B53'
@@ -17,9 +18,12 @@ COLUMN_WIDTH = '11rem'
 
 class AccountsManagerUI:
     def __init__(self, user_data: dict = {}):
-        self.accounts = []
+        if not user_data.get('name') or not user_data.get('budgets'):
+            pass  # TODO think how to rise an error if there is no user or budgets
+
+        self.user_data = user_data
+        self.accounts = self._get_accounts(user_data.get('default_budget', ''))
         self.container = None
-        self.user_data = user_data  # Store user data
 
     def refresh_table(self):
         self.container.clear()
@@ -41,21 +45,21 @@ class AccountsManagerUI:
                 with ui.row().classes('items-center gap-2 p-2 rounded-xl shadow-md  w-full').style(
                     f'background-color: {TABLE_ADD_BG};'
                 ):
-                    if entry["editable"]:
+                    if entry.get('editable', False):
                         bank_input = (
-                            ui.input(value=entry["bank_name"])
+                            ui.select(options=constants.SUPPORTED_BANKS, value=entry['bank_name'])
                             .classes('w-32')
                             .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
                             .style(f'width: {COLUMN_WIDTH};')
                         )
                         account_input = (
-                            ui.input(value=entry["account"])
+                            ui.input(value=entry['account'])
                             .classes('w-32')
                             .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
                             .style(f'width: {COLUMN_WIDTH};')
                         )
                         password_input = (
-                            ui.input(value=entry["password"])
+                            ui.input(value=entry.get('password', '••••••••'))
                             .classes('w-32 password')
                             .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
                             .style(f'width: {COLUMN_WIDTH};')
@@ -68,9 +72,9 @@ class AccountsManagerUI:
                             color=BUTTON_COLOR,
                         ).classes('w-10')
                     else:
-                        ui.label(entry["bank_name"]).classes('w-32').style(f'width: {COLUMN_WIDTH};')
-                        ui.label(entry["account"]).classes('w-32').style(f'width: {COLUMN_WIDTH};')
-                        ui.label("••••••••").classes('w-32').style(f'width: {COLUMN_WIDTH};')
+                        ui.label(entry['bank_name']).classes('w-32').style(f'width: {COLUMN_WIDTH};')
+                        ui.label(entry['account']).classes('w-32').style(f'width: {COLUMN_WIDTH};')
+                        ui.label('••••••••').classes('w-32').style(f'width: {COLUMN_WIDTH};')
                         ui.button(icon='edit', on_click=lambda i=index: self.edit_row(i), color=BUTTON_COLOR).classes(
                             'w-10'
                         )
@@ -87,19 +91,19 @@ class AccountsManagerUI:
                 f'background-color: {TABLE_BG};'
             ):
                 new_bank = (
-                    ui.select(options=constants.SUPPORTED_BANKS, label="Bank")
+                    ui.select(options=constants.SUPPORTED_BANKS, label='Bank')
                     .classes('w-32')
-                    .props(f'label-color=grey-5')
+                    .props('label-color=grey-5')
                     .style(f'width: {COLUMN_WIDTH};')
                 )
                 new_account = (
-                    ui.input("Account")
+                    ui.input('Account')
                     .classes('w-32')
                     .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
                     .style(f'width: {COLUMN_WIDTH};')
                 )
                 new_password = (
-                    ui.input("Password")
+                    ui.input('Password')
                     .classes('w-32 password')
                     .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
                     .style(f'width: {COLUMN_WIDTH};')
@@ -110,15 +114,15 @@ class AccountsManagerUI:
                 ).classes('w-10')
 
     def edit_row(self, index):
-        self.accounts[index]["editable"] = True
+        self.accounts[index]['editable'] = True
         self.refresh_table()
 
     def save_row(self, index, bank_input, account_input, password_input):
         self.accounts[index] = {
-            "bank_name": bank_input.value,
-            "account": account_input.value,
-            "password": password_input.value,
-            "editable": False,
+            'bank_name': bank_input.value,
+            'account': account_input.value,
+            'password': password_input.value,
+            'editable': False,
         }
         self.refresh_table()
 
@@ -133,12 +137,16 @@ class AccountsManagerUI:
             return
         self.accounts.append(
             {
-                "bank_name": bank_input.value,
-                "account": account_input.value,
-                "password": password_input.value,
-                "editable": False,
+                'bank_name': bank_input.value,
+                'account': account_input.value,
+                'password': password_input.value,
+                'editable': False,
             }
         )
+        self.refresh_table()
+
+    def change_budget(self, event_handler: ValueChangeEventArguments):
+        self.accounts = self._get_accounts(event_handler.value)
         self.refresh_table()
 
     def start_ui(self):
@@ -160,12 +168,29 @@ class AccountsManagerUI:
                         f'color:{TEXT_COLOR}; width: calc(2 * {COLUMN_WIDTH}); font-weight: 400;'
                     )
                     ui.label('').style('flex:1')  # Spacer to push select to the right
-                    ui.select(options=["Budget 1", "Budget 2", "Budget 3"], label="Budget").classes('w-32').style(
-                        f'width: {COLUMN_WIDTH}; color: {TEXT_COLOR}; text-align: right;'
-                    )
+
+                    ui.select(
+                        options=self._get_budgets(),
+                        value=self._get_default_budget(),
+                        label='Budget',
+                        on_change=self.change_budget,
+                    ).classes('w-32').style(f'width: 13rem; color: {TEXT_COLOR}; text-align: right;')
+
                 # Accounts table, fills parent width
                 with ui.row().classes('w-full'):
                     with ui.column().classes('items-center w-full') as self.container:
                         pass
 
         self.refresh_table()
+
+    def _get_budgets(self) -> list[str]:
+        budgets: dict = self.user_data.get('budgets', {})
+        return list(budgets.keys()) if budgets else []
+
+    def _get_default_budget(self) -> str:
+        budgets: dict = self.user_data.get('budgets', {})
+        return self.user_data.get('default_budget', '')
+
+    def _get_accounts(self, budget_name: str):
+        budgets: dict = self.user_data.get('budgets', {})
+        return budgets.get(budget_name, {}).get('accounts', [])

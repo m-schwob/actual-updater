@@ -1,5 +1,7 @@
 from nicegui import ui
 
+from src.app import constants
+
 # Theme colors
 PAGE_BG = '#243B53'
 TABLE_HEADER_BG = '#102A43'
@@ -12,10 +14,10 @@ TITLE_COLOR = '#96ABC1'
 
 
 class AccountsManagerUI:
-    def __init__(self, accounts=[], account_list=[]):
-        self.accounts = accounts
-        self.account_list = account_list
+    def __init__(self, user_data: dict = {}):
+        self.accounts = []
         self.container = None
+        self.user_data = user_data  # Store user data
 
     def refresh_table(self):
         self.container.clear()
@@ -80,7 +82,9 @@ class AccountsManagerUI:
                 f'background-color: {TABLE_BG};'
             ):
                 new_bank = (
-                    ui.select(options=self.account_list, label="Bank").classes('w-32').props(f'label-color=grey-5')
+                    ui.select(options=constants.SUPPORTED_BANKS, label="Bank")
+                    .classes('w-32')
+                    .props(f'label-color=grey-5')
                 )
                 new_account = (
                     ui.input("Account").classes('w-32').props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
@@ -131,8 +135,11 @@ class AccountsManagerUI:
         ui.dark_mode().enable()
         ui.query('body').style(f'background-color: {PAGE_BG}; color: {TEXT_COLOR};')
 
-        ui.label('Actual Accounts Manager').classes('text-2xl mb-6 text-center w-full font-bold').style(
+        ui.label('Actual Accounts Manager').classes('text-2xl text-center w-full font-bold').style(
             f'color:{TITLE_COLOR};'
+        )
+        ui.label(f'Logged in as: {self.user_data.get("name")}').classes('text-lg text-center w-full').style(
+            f'color:{TEXT_COLOR};'
         )
 
         with ui.row().classes('w-full justify-center'):

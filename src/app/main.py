@@ -28,6 +28,31 @@ app.add_middleware(SessionMiddleware, secret_key="fast-api-session-secret-key")
 def updater_page(request: Request):
     user: dict = request.session.get('user')
     user_data = {
-        "name": user.get('name'),
+        'name': user.get('name'),
+        'budgets': BUDGETS_DATA,
+        'default_budget': "Pizza Party Fund"
     }
     return AccountsManagerUI(user_data=user_data).start_ui()
+
+
+# Example constant for budgets and accounts using only SUPPORTED_BANKS as text, with funny budget names
+BUDGETS_DATA = {
+    "Pizza Party Fund": {
+        "accounts": [
+            {"bank": "Bank Hapoalim", "account": "Checking"},
+            {"bank": "Bank Leumi", "account": "Savings"},
+        ]
+    },
+    "Secret Vacation Stash": {
+        "accounts": [
+            {"bank": "Mizrahi Bank", "account": "Investment"},
+            {"bank": "Discount Bank", "account": "Business"},
+            {"bank": "Mercantile Bank", "account": "Joint"},
+        ]
+    },
+    "Emergency Unicorn Fund": {
+        "accounts": [
+            {"bank": "Bank Otsar Hahayal", "account": "Credit Card"},
+        ]
+    },
+}

@@ -148,12 +148,24 @@ class AccountsManagerUI:
         ui.label('Actual Accounts Manager').classes('text-2xl text-center w-full font-bold').style(
             f'color:{TITLE_COLOR};'
         )
-        ui.label(f'Logged in as: {self.user_data.get("name")}').classes('text-lg text-center w-full').style(
-            f'color:{TEXT_COLOR};'
-        )
 
+        # Parent container to control width
         with ui.row().classes('w-full justify-center'):
-            with ui.column().classes('items-center') as self.container:
-                pass
+            with ui.column().classes('items-center').style('width: fit-content; min-width: 40rem;'):
+                # User info row with open list, fills parent width, no shadow, smaller and not bold
+                with ui.row().classes('items-center gap-2 p-2 rounded-xl w-full').style(
+                    'font-size: 0.95rem; font-weight: 400; width: 100%;'
+                ):
+                    ui.label(f'Logged in as: {self.user_data.get("name")}').classes('text-base').style(
+                        f'color:{TEXT_COLOR}; width: calc(2 * {COLUMN_WIDTH}); font-weight: 400;'
+                    )
+                    ui.label('').style('flex:1')  # Spacer to push select to the right
+                    ui.select(options=["Budget 1", "Budget 2", "Budget 3"], label="Budget").classes('w-32').style(
+                        f'width: {COLUMN_WIDTH}; color: {TEXT_COLOR}; text-align: right;'
+                    )
+                # Accounts table, fills parent width
+                with ui.row().classes('w-full'):
+                    with ui.column().classes('items-center w-full') as self.container:
+                        pass
 
         self.refresh_table()

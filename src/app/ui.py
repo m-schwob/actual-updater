@@ -12,6 +12,8 @@ BUTTON_COLOR = '#9446ED'
 DELETE_COLOR = '#E11D48'
 TITLE_COLOR = '#96ABC1'
 
+COLUMN_WIDTH = '11rem'
+
 
 class AccountsManagerUI:
     def __init__(self, user_data: dict = {}):
@@ -27,9 +29,9 @@ class AccountsManagerUI:
             with ui.row().classes('font-bold items-center gap-2 p-2 rounded-xl shadow-md w-full').style(
                 f'background-color: {TABLE_HEADER_BG}; font-size: 1rem;'
             ):
-                ui.label('Bank Name').classes('w-32').style(f'color:{TITLE_COLOR};')
-                ui.label('Account').classes('w-32').style(f'color:{TITLE_COLOR};')
-                ui.label('Password').classes('w-32').style(f'color:{TITLE_COLOR};')
+                ui.label('Bank Name').classes('w-32').style(f'color:{TITLE_COLOR}; width: {COLUMN_WIDTH};')
+                ui.label('Account').classes('w-32').style(f'color:{TITLE_COLOR}; width: {COLUMN_WIDTH};')
+                ui.label('Password').classes('w-32').style(f'color:{TITLE_COLOR}; width: {COLUMN_WIDTH};')
                 ui.label('').classes('w-10')
                 ui.label('').classes('w-10')
 
@@ -44,16 +46,19 @@ class AccountsManagerUI:
                             ui.input(value=entry["bank_name"])
                             .classes('w-32')
                             .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
+                            .style(f'width: {COLUMN_WIDTH};')
                         )
                         account_input = (
                             ui.input(value=entry["account"])
                             .classes('w-32')
                             .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
+                            .style(f'width: {COLUMN_WIDTH};')
                         )
                         password_input = (
                             ui.input(value=entry["password"])
                             .classes('w-32 password')
                             .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
+                            .style(f'width: {COLUMN_WIDTH};')
                         )
                         ui.button(
                             icon='save',
@@ -63,9 +68,9 @@ class AccountsManagerUI:
                             color=BUTTON_COLOR,
                         ).classes('w-10')
                     else:
-                        ui.label(entry["bank_name"]).classes('w-32')
-                        ui.label(entry["account"]).classes('w-32')
-                        ui.label("••••••••").classes('w-32')
+                        ui.label(entry["bank_name"]).classes('w-32').style(f'width: {COLUMN_WIDTH};')
+                        ui.label(entry["account"]).classes('w-32').style(f'width: {COLUMN_WIDTH};')
+                        ui.label("••••••••").classes('w-32').style(f'width: {COLUMN_WIDTH};')
                         ui.button(icon='edit', on_click=lambda i=index: self.edit_row(i), color=BUTTON_COLOR).classes(
                             'w-10'
                         )
@@ -85,14 +90,19 @@ class AccountsManagerUI:
                     ui.select(options=constants.SUPPORTED_BANKS, label="Bank")
                     .classes('w-32')
                     .props(f'label-color=grey-5')
+                    .style(f'width: {COLUMN_WIDTH};')
                 )
                 new_account = (
-                    ui.input("Account").classes('w-32').props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
+                    ui.input("Account")
+                    .classes('w-32')
+                    .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
+                    .style(f'width: {COLUMN_WIDTH};')
                 )
                 new_password = (
                     ui.input("Password")
                     .classes('w-32 password')
                     .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
+                    .style(f'width: {COLUMN_WIDTH};')
                 )
                 ui.label('').classes('w-10')  # Placeholder for edit button
                 ui.button(

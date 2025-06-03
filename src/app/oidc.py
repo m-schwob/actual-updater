@@ -14,9 +14,7 @@ class OIDCAuth:
             client_id=client_id,
             client_secret=client_secret,
             server_metadata_url=self.server_url.rstrip('/') + '/.well-known/openid-configuration',
-            client_kwargs={
-                'scope': 'openid profile groups'
-            }
+            client_kwargs={'scope': 'openid profile groups'},
         )
 
         self._setup_routes()
@@ -47,12 +45,16 @@ class OIDCAuth:
     def _register_oidc_middleware(self):
         @self.app.middleware('http')
         async def oidc_middleware(request: Request, call_next):
+            # Skip authentication for static files and common static paths
+            static_prefixes = ['/_nicegui/']
+            if any(request.url.path.startswith(prefix) for prefix in static_prefixes):
+                return await call_next(request)
             if request.url.path in ['/login', '/oidc/callback', '/logout']:
                 return await call_next(request)
             if self._validate_authelia_session(request) and await self._validate_access_token(request):
                 return await call_next(request)
             request.session.clear()
-            return RedirectResponse(url='/login') 
+            return RedirectResponse(url='/login')
 
     def _validate_authelia_session(self, request: Request):
         authelia_session = request.cookies.get('authelia_session')
@@ -64,11 +66,11 @@ class OIDCAuth:
 
         return True
 
-    async def _validate_access_token(self, request:Request):
+    async def _validate_access_token(self, request: Request):
         provider: StarletteOAuth2App = self.oauth.authelia
         token = request.session.get('token')
         try:
-            userinfo = await provider.userinfo(token=token) # validate the user token
+            userinfo = await provider.userinfo(token=token)  # validate the user token
         except Exception:
             return False
         if userinfo and userinfo.get('sub') == request.session.get('user', {}).get('sub'):

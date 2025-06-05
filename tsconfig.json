@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-      "module": "CommonJS",
-      "outDir": "dist",
-      "rootDir": "src",
-      "strict": true,
-      "target": "ES2016"
+    "target": "ESNext",
+    "module": "CommonJS",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
   }
 }

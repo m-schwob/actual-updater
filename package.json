@@ -1,16 +1,24 @@
 {
+  "name": "actual-updater",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Provide Sync services between all major Israeli banks and credit card companies, to the Actual app",
+  "engines": {
+    "node": ">= 18.19.0"
+  },
+  "license": "MIT",
   "type": "commonjs",
   "scripts": {
-    "start": "ts-node-esm ./src/index.ts",
-    "config": "ts-node-esm ./src/updateAccount.ts",
+    "start": "ts-node ./src/index.ts",
+    "config": "ts-node ./src/updateAccount.ts",
     "lint": "eslint . --max-warnings 0",
     "build": "tsc",
     "build-w": "tsc -w"
   },
   "dependencies": {
-    "@actual-app/api": "^6.2.1",
-    "crypto": "^1.0.1",
-    "israeli-bank-scrapers": "^4.0.2",
-    "keytar": "^7.9.0"
+    "@actual-app/api": "^6.9.0",
+    "israeli-bank-scrapers": "^5.1.1",
+    "keytar": "^7.9.0",
+    "typescript": "^5.5.4"
   }
 }

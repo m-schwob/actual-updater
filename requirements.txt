@@ -1,0 +1,6 @@
+fastapi
+nicegui
+authlib 
+uvicorn[standard]
+cryptography
+ 

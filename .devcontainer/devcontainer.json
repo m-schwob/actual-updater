@@ -1,0 +1,32 @@
+{
+    "name": "actual-updater-dev",
+    "build": {
+        "dockerfile": "Dockerfile",
+        "context": ".."
+    },
+    "forwardPorts": [
+        5006,
+        9091
+    ],
+    // run before the container building, ensure the data directory exists
+    "initializeCommand": "if not exist .\\data\\actual-server mkdir .\\data\\actual-server",
+    "mounts": [
+        // bind preinstalled node_modules to avoid reinstalling them
+        "source=actual-updater-node_modules,target=/workspaces/actual-updater/node_modules,type=volume"
+    ],
+    "postCreateCommand": "yarn install",
+    "overrideCommand": false,
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "python.defaultInterpreterPath": "/opt/venv/bin/python"
+            },
+            "extensions": [
+                "ms-python.black-formatter",
+                "ms-python.debugpy",
+                "ms-python.python",
+                "ms-python.vscode-pylance"
+            ]
+        }
+    }
+}

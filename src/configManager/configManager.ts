@@ -1,33 +1,48 @@
 import { existsSync, promises as fs } from 'fs';
-import { decrypt, encrypt } from './encryption/crypto';
+import { decrypt, encrypt, generateIv} from './encryption/crypto';
 import { Config } from '../commonTypes';
 import { configFilePath } from '../app-globals';
-import {DEFAULT_CONFIG} from './defaultConfig';
+import { DEFAULT_CONFIG } from './defaultConfig';
+import getKey from './encryption/keytar';
 
 export async function getConfig(configPath: string = configFilePath): Promise<Config> {
-  const configFromFile = await getConfigFromFile(configPath);
+  const fileContent = await getConfigFromFile(configPath);
 
-  if (configFromFile) {
-    const decrypted = await decrypt(configFromFile) as string;
-    return JSON.parse(decrypted);
+  if (fileContent && "iv" in fileContent && "config" in fileContent) {
+    const key = await getKey();
+    const iv = Buffer.from(fileContent.iv, 'hex')
+    const decryptedConfig = await decrypt(fileContent.config, key, iv) as string;
+    return JSON.parse(decryptedConfig);
   }
 
-  // Fallback to configExample if there is no config file defined at all
+  // Fallback to configExample if there is no config file defined at all. TODO review the default configuration.
   return DEFAULT_CONFIG;
 }
 
 export async function updateConfig(configPath: string, configToUpdate: Config): Promise<void> {
-  const stringifiedConfig = JSON.stringify(configToUpdate, null, 2);
-  const encryptedConfigStr = await encrypt(stringifiedConfig);
-  await fs.writeFile(configPath, encryptedConfigStr);
+  const currentConfig = await getConfig(configPath);
+  currentConfig.scraping.accountsToScrape = currentConfig.scraping.accountsToScrape.concat(configToUpdate.scraping.accountsToScrape)
+  const stringifiedConfig = JSON.stringify(currentConfig, null, 2);
+
+  const key = await getKey();
+  const iv = generateIv();
+  const encryptedConfig = await encrypt(stringifiedConfig, key, iv);
+
+  const fileContent = JSON.stringify({
+    iv: iv.toString("hex"),
+    config: encryptedConfig
+  })
+  await fs.writeFile(configPath, fileContent);
 }
 
-async function getConfigFromFile(configPath: string) {
+export async function getConfigFromFile(configPath: string) {
   if (existsSync(configPath)) {
-    return fs.readFile(configPath, {
+    const stringfile = await fs.readFile(configPath, {
       encoding: 'utf8'
     });
+    return JSON.parse(stringfile);
   }
-  return null;
+  else{
+    return {};
+  }
 }
-

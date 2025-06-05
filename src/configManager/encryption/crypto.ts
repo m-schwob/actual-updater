@@ -1,27 +1,27 @@
-/*
-Copied from https://github.com/eshaham/israeli-ynab-updater/blob/b207a6b2468fa2904412fe9563b8f65ac1e4cfaa/src/helpers/crypto.js
-*/
-
 import * as crypto from 'crypto';
-import SALT from './salt';
 
-const ALGORITHM = 'aes-256-ctr';
+const ALGORITHM = 'aes-256-cbc';
+const IV_SIZE = 16;
+const KEY_SIZE = 32;
 
-export function randomHex(characters = 16) {
-  return crypto.randomBytes(characters).toString('hex');
+
+export async function encrypt(text: string, key: crypto.CipherKey, iv: crypto.BinaryLike): Promise<string> {
+  const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+  const encrypted = cipher.update(text, 'utf8', 'hex');
+  return encrypted + cipher.final('hex');
 }
 
-export async function encrypt(text: string) {
-  const salt = await SALT(randomHex());
-
-  const cipher = crypto.createCipher(ALGORITHM, salt);
-  const crypted = cipher.update(text, 'utf8', 'hex');
-  return crypted + cipher.final('hex');
-}
-
-export async function decrypt(text: string) {
-  const salt = await SALT();
-  const decipher = crypto.createDecipher(ALGORITHM, salt);
+export async function decrypt(text: string, key: crypto.CipherKey, iv: crypto.BinaryLike): Promise<string> {
+  const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
   const decrypted = decipher.update(text, 'hex', 'utf8');
   return decrypted + decipher.final('utf8');
 }
+
+export function generateKey(characters: number = KEY_SIZE): Buffer {
+  return crypto.randomBytes(characters);
+}
+
+export function generateIv(): Buffer {
+  return crypto.randomBytes(IV_SIZE);
+}
+

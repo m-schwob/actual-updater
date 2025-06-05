@@ -1,0 +1,99 @@
+server:
+  host: 0.0.0.0
+  port: 9091
+
+jwt_secret: "supersecretjwt"
+
+storage:
+  encryption_key: "verylongsupersecretkey"
+  local:
+    path: /var/lib/authelia/db.sqlite3
+
+notifier:
+  filesystem:
+    filename: /data/notification.txt
+
+access_control:
+  default_policy: one_factor
+
+session:
+  name: authelia_session
+  secret: "sessionsecret"
+  expiration: 3600
+  inactivity: 300
+  domain: 127.0.0.1
+
+identity_providers:
+  oidc:
+    enable_client_debug_messages: true
+    jwks:
+      - key_id: 'oid_id'
+        algorithm: 'RS256'
+        use: 'sig'
+        key: |
+          -----BEGIN PRIVATE KEY-----
+          MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDBDgrWd6TJj35q
+          snk2cW/4mWGEkZ4/x44z7qLVUkJcGfK8z+bjiUahvXhS9kCl68hbcg+FLBPbhs/4
+          MQRZOA0nlUcQJ2/K1ykKrZQXehuYWYiMOP60SufE0A2cwK46Oirepp0MK9RAgu51
+          t63zDFpozTRV7wVAkAUPSD8VKf7ceGiy+y1ZLfJiODLl4J5PyoDLZFs7JDTYLDwW
+          FfIzlNNUk6Tw8I9aPJqJvUN/XO3JkaZ60RCC3+db8RDRKl86XtNB+uUV2lcefpj2
+          PnERzzk2mIpl3V3oNRnYB8JCpWo/IkxmxoouHmQCFhmcgBeK6qiWJVf5Sac9MGqR
+          FeM0N629AgMBAAECggEAAsKpuYIpnJ8yYndYVS9fN5Rb3lp7AzRI2Sm/nCIVDv4+
+          UrWnT8K/UYyPwKHtmoxp8j10htsykn2Vki8t6H0Cb8803lXYsEi4zm1dHs57wAcs
+          X72TOMPnF1Dr7OfyuyQ98i6QNCPD9m3Y19056G3ZX20VuJKBG6NONeHQKG7lX8TL
+          oBfls/JTCoz6nPJsnqkDM7QosfKQOq/VDmX2QhuHe7iEv2/3BSJpB6mrqH7p7qzB
+          RtBMocWa+v3z6cizXYymLpwHvCksZYL41t+szQTgD2C6VcS4gVukmX3G/3LmwWrs
+          mZdFxZwQ15GvTfwwxI3D4tzSYMbIRIfl9qWXenIX8QKBgQDliLwD8OrvQe+DnYWE
+          teO5Veh1MeLxO7ll85/koKRJIMGz6IL/8fw3yWGUUsYZ3f/bsDx6bzlGCHMLrnDP
+          dv8DnQ7UTEo1g/DpOuEefZu/EP19dAOeXZ1zO5M/+QV/I6krrARjpf4YUyL0R+LP
+          //0O4mdfd0yyughzAueqXY1msQKBgQDXUIhLk19b2vT54hrh8FRR1oD1GcfOdXrO
+          bCA6rTNyNRguphz7OJlmcTcmFFL10RwyrNPjwazYNdjKOMDxPutqT9WXwiTGg2Qi
+          YF3Awd3PoZPAv8A4rcU3brT7+gST8QL4HIa5W2PyFh3SB7DEHjaJBoeQNtFNHzE2
+          IDrkHgQSzQKBgCY+BM1HS203eBdenEtDHsDXPlagTCZTBA2nbIFj/lssuPkniQPp
+          plMJG1fh/p16rlFE6J6hf1JawAg3NRZrxgstFLZsS4TlCbNiGvXAib1osENBnAS7
+          pir3xw3GiJLpNxtOmqCbnF0jJNS8UV7EUL41HHH8Z2vzsMqwtjZdRdzRAoGBAK39
+          rtXblkBk9HeFJhIUIh8rxnPJzHNi7cUnDPg9hAgzLYJsy5iaySNGM7l6zPtFapLs
+          pCE1HZZuFOx85jVMkfIL519GDG+6N02sL7aXMsYZHIuyqANlMKw1sty30cE3Dh4u
+          9xOL7XzwMFLL0iT5ATrDYwK/uWyn2x2Q9+Xk94e1AoGALID9vSfdWwpr1xTJcqyd
+          lIs+B7aqnn0FnGkCEFnG4HvwqlxS0+kfL+KEbfM2FJPQ27ZXtbfn+dX4EjN8Mw1c
+          kT90SWAgbpJ0LUn8twqxJFlbjFFdmTrci0a5iToXAs3BXR9jYVMhFUEI9CBhlus7
+          MZbbjJQ5cIL1U66DA//dajI=
+          -----END PRIVATE KEY-----
+    clients:
+      - client_id: updater-client-id
+        client_name: 'Actual Updater'
+        client_secret: updater-client-secret
+        authorization_policy: one_factor
+        redirect_uris:
+          - "http://127.0.0.1:8000/oidc/callback"
+        scopes:
+          - openid
+          - profile
+          - groups
+        userinfo_signed_response_alg: none
+        consent_mode: implicit
+        public: false
+
+      - client_id: actual-client-id
+        client_name: 'Actual Budget'
+        client_secret: 'actual_client_secret'
+        authorization_policy: one_factor
+        redirect_uris:
+          - http://127.0.0.1:5006/openid/callback
+        scopes:
+          - openid
+          - email
+          - profile
+          - groups
+        userinfo_signed_response_alg: none
+        consent_mode: implicit
+        public: false
+
+authentication_backend:
+  file:
+    path: /workspaces/actual-updater/.devcontainer/authelia/users.yaml
+
+log:
+  level: debug
+  file_path: '/var/log/authelia/authelia.log'
+  keep_stdout: true

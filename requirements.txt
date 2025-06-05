@@ -3,4 +3,5 @@ nicegui
 authlib 
 uvicorn[standard]
 cryptography
+keyring
  

@@ -8,6 +8,9 @@
         5006,
         9091
     ],
+    "containerEnv": {
+        "TZ": "Asia/Jerusalem"
+    },
     // run before the container building, ensure the data directory exists
     "initializeCommand": "if not exist .\\data\\actual-server mkdir .\\data\\actual-server",
     "mounts": [
@@ -15,6 +18,7 @@
         "source=actual-updater-node_modules,target=/workspaces/actual-updater/node_modules,type=volume"
     ],
     "postCreateCommand": "yarn install",
+    "postStartCommand": "supervisorctl status",
     "overrideCommand": false,
     "customizations": {
         "vscode": {

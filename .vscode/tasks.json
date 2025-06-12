@@ -2,22 +2,55 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Show Supervisor Status",
+            "type": "shell",
+            "command": "supervisorctl status",
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
             "label": "Restart Authelia Service",
             "type": "shell",
             "command": "supervisorctl restart authelia",
-            "args": [],
             "group": "none",
-            "isBackground": false,
             "problemMatcher": []
         },
         {
             "label": "Restart Actual-Server Service",
             "type": "shell",
             "command": "supervisorctl restart actual-server",
-            "args": [],
             "group": "none",
-            "isBackground": false,
             "problemMatcher": []
+        },
+        {
+            "label": "Stop Authelia Service",
+            "type": "shell",
+            "command": "supervisorctl stop authelia",
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "Stop Actual-Server Service",
+            "type": "shell",
+            "command": "supervisorctl stop actual-server",
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "Clear Actual-Server Data",
+            "type": "shell",
+            "command": "rm -rf ${workspaceFolder}/data/actual-server/{*,.[!.]*,..?*}",
+            "group": "none",
+            "problemMatcher": []
+        },
+        {
+            "label": "Clear and Restart Actual-Server",
+            "dependsOn": [
+                "Clear Actual-Server Data",
+                "Restart Actual-Server Service"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": [],
         }
-    ]
+    ],
 }

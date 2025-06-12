@@ -18,7 +18,7 @@
         "source=actual-updater-node_modules,target=/workspaces/actual-updater/node_modules,type=volume"
     ],
     "postCreateCommand": "yarn install",
-    "postStartCommand": "supervisorctl status",
+    "postAttachCommand": "supervisorctl status",
     "overrideCommand": false,
     "customizations": {
         "vscode": {

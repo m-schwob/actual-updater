@@ -2,16 +2,16 @@
 # yarn lockfile v1
 
 
-"@actual-app/api@^6.9.0":
-  version "6.9.0"
-  resolved "https://registry.yarnpkg.com/@actual-app/api/-/api-6.9.0.tgz#db0d13ec94dbc84b4d6fdcf2b67aa53f304f31cd"
-  integrity sha512-/2uwe3c+gvLDpn59io+dKLC9dDvrZyT36DEWRGxe5BR7zvgm2rFbyhxyud+q4S9OODs8W7Oc5DVaoLYWilZBJA==
+"@actual-app/api@^25.7.1":
+  version "25.7.1"
+  resolved "https://registry.yarnpkg.com/@actual-app/api/-/api-25.7.1.tgz#aaa0af8ba23fc53174085167caf720e3bee6e56f"
+  integrity sha512-ApqgrBH7eM67pK5GCyuOHlX9ef8eIgz8D/QfCiZtRqvRUG0Ur4AmH3rY23JFvm3y6n18rVz7576E6WsUUixxuw==
   dependencies:
     "@actual-app/crdt" "^2.1.0"
-    better-sqlite3 "^9.6.0"
-    compare-versions "^6.1.0"
+    better-sqlite3 "^11.10.0"
+    compare-versions "^6.1.1"
     node-fetch "^3.3.2"
-    uuid "^9.0.1"
+    uuid "^11.1.0"
 
 "@actual-app/crdt@^2.1.0":
   version "2.1.0"
@@ -163,10 +163,10 @@ basic-ftp@^5.0.2:
   resolved "https://registry.yarnpkg.com/basic-ftp/-/basic-ftp-5.0.5.tgz#14a474f5fffecca1f4f406f1c26b18f800225ac0"
   integrity sha512-4Bcg1P8xhUuqcii/S0Z9wiHIrQVPMermM1any+MX5GeGD7faD3/msQUDGLol9wOcz4/jbg/WJnGqoJF6LiBdtg==
 
-better-sqlite3@^9.6.0:
-  version "9.6.0"
-  resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-9.6.0.tgz#b01e58ba7c48abcdc0383b8301206ee2ab81d271"
-  integrity sha512-yR5HATnqeYNVnkaUTf4bOP2dJSnyhP4puJN/QPRyx4YkBEEUxib422n2XzPqDEHjQQqazoYoADdAm5vE15+dAQ==
+better-sqlite3@^11.10.0:
+  version "11.10.0"
+  resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-11.10.0.tgz#2b1b14c5acd75a43fd84d12cc291ea98cef57d98"
+  integrity sha512-EwhOpyXiOEL/lKzHz9AW1msWFNzGc/z+LzeB3/jnFJpxu+th2yqvzsSWas1v9jgs9+xiXJcD5A8CJxAG2TaghQ==
   dependencies:
     bindings "^1.5.0"
     prebuild-install "^7.1.1"
@@ -271,10 +271,10 @@ commander@^2.15.1:
   resolved "https://registry.yarnpkg.com/commander/-/commander-2.20.3.tgz#fd485e84c03eb4881c20722ba48035e8531aeb33"
   integrity sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==
 
-compare-versions@^6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/compare-versions/-/compare-versions-6.1.0.tgz#3f2131e3ae93577df111dba133e6db876ffe127a"
-  integrity sha512-LNZQXhqUvqUTotpZ00qLSaify3b4VFD588aRr8MKFw4CMUr98ytzCW5wDH5qx/DEY5kCDXcbcRuCqL0szEf2tg==
+compare-versions@^6.1.1:
+  version "6.1.1"
+  resolved "https://registry.yarnpkg.com/compare-versions/-/compare-versions-6.1.1.tgz#7af3cc1099ba37d244b3145a9af5201b629148a9"
+  integrity sha512-4hm4VPpIecmlg59CHXnRDnqGplJFrbLG4aFEl5vl6cK1u76ws3LLvX7ikFnTDl5vo39sjWD6AaDPYodJp/NNHg==
 
 core-js@^3.1.4:
   version "3.36.0"
@@ -1110,6 +1110,11 @@ util-deprecate@^1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
+
+uuid@^11.1.0:
+  version "11.1.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.1.0.tgz#9549028be1753bb934fc96e2bca09bb4105ae912"
+  integrity sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==
 
 uuid@^9.0.0, uuid@^9.0.1:
   version "9.0.1"

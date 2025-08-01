@@ -18,7 +18,8 @@ RUN wget -O /tmp/$AUTHELIA_BINARY.tar.gz https://github.com/authelia/authelia/re
     && rm -r /tmp
 
 # Install Actual server globally
-RUN npm install --location=global @actual-app/sync-server
+ARG ACTUAL_SERVER_VERSION=25.7.1
+RUN npm install --location=global @actual-app/sync-server@${ACTUAL_SERVER_VERSION}
 
 # Install Python dependencies
 ENV VIRTUAL_ENV="/opt/venv"

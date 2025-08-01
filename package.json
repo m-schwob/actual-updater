@@ -16,7 +16,7 @@
     "build-w": "tsc -w"
   },
   "dependencies": {
-    "@actual-app/api": "^6.9.0",
+    "@actual-app/api": "^25.7.1",
     "israeli-bank-scrapers": "^5.1.1",
     "keytar": "^7.9.0",
     "typescript": "^5.5.4"

@@ -20,5 +20,10 @@
     "israeli-bank-scrapers": "^5.1.1",
     "keytar": "^7.9.0",
     "typescript": "^5.5.4"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.4"
   }
 }

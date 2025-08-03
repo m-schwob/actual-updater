@@ -190,25 +190,32 @@ data/
 └── sqlite.db           # Database for user bank credentials and budget mappings
 ```
 
-### Budgets Table
-```sql
-CREATE TABLE budgets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    budget_id TEXT NOT NULL UNIQUE,
-    default_account_id INTEGER,
-    FOREIGN KEY (default_account_id) REFERENCES accounts (id)
-);
+### Config Schema
+```yaml
+oidc:
+    client_id: "<your-client-id>"
+    client_secret: "<your-client-secret>"
+    server_url: "https://authelia.example.com"
+actual:
+    actual_server_url: "https://actual.example.com"
+    api_data_directory: "./data"
+    actual_server_db: ".actual-server/server-files/accounts.db" # for automatic admin token extraction
+    admin_token: "<admin-token>"  # alternatively add token manually if actual_server_db not used
+chron-job:
+    schedule: "0 * * * *"  # Example cron schedule for hourly sync
+data_directory: "./data"
 ```
 
-### Accounts Table
+### Database Schema
 ```sql
 CREATE TABLE accounts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    budget_id INTEGER PRIMARY KEY NOT NULL,
+    -- Bank-side information
     financial_provider TEXT NOT NULL,
-    account TEXT NOT NULL,
-    password TEXT NOT NULL,  -- Encrypted
-    budget_id INTEGER,
-    FOREIGN KEY (budget_id) REFERENCES budgets (id)
+    financial_provider_account TEXT NOT NULL,
+    password TEXT NOT NULL,  -- Encrypted financial_provider login password
+    -- Actual-side information
+    actual_account_id TEXT PRIMARY KEY NOT NULL,  -- Account ID in Actual Budget
 );
 ```
 

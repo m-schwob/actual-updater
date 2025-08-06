@@ -3,4 +3,6 @@ nicegui
 authlib 
 uvicorn[standard]
 cryptography
+keyring
+keyrings.alt
  

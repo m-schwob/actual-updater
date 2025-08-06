@@ -11,3 +11,4 @@ package-lock.json
 .devcontainer/supervisord.log
 .devcontainer/supervisord.pid
 /data
+/coverage/

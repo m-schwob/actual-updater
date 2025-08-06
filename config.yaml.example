@@ -1,0 +1,22 @@
+# Actual Updater Configuration
+# Copy this file to config.yaml and fill in your actual values
+
+oidc:
+  clientId: "your-oidc-client-id"
+  clientSecret: "your-oidc-client-secret"
+  serverUrl: "http://localhost:9091"  # Your Authelia server URL
+
+actual:
+  actualServerUrl: "http://localhost:5006"  # Your Actual Budget server URL
+  # Choose ONE of the following two options:
+  adminToken: "your-admin-oidc-token"  # Option 1: Provide admin token manually
+  # actualServerDb: "/path/to/actual-server/server-files/account.sqlite"  # Option 2: Auto-extract from database
+
+cronJob:
+  schedule: "0 8 * * *"  # Daily at 8 AM (cron format)
+
+# Optional: defaults to './data' if not specified
+dataDirectory: "./data"
+
+# Note: apiDataDirectory is set automatically to {dataDirectory}/actual-api
+# You don't need to specify it in the configuration file

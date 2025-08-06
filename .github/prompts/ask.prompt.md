@@ -4,6 +4,8 @@ mode: ask
 
 ## Quick Context Prompt
 
+Note: use yarn to run the TypeScript service, and uvicorn to run the Python app.
+
 Please read the following for full project context:
 1. README.md - Project overview and quick start
 2. DESIGN.md - Architecture decisions and component design

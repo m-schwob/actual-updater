@@ -54,9 +54,8 @@ The project consists of three main components:
     To run the main components manually:
 
     ```bash
-        # Run the credential management GUI with Uvicorn
-        uvicorn src.app.main:app --reload
-    ```
+    # Run the credential management GUI with Uvicorn
+    uvicorn src.app.main:app --reload
 
     # Run the sync service
     yarn start

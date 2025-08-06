@@ -41,7 +41,8 @@
             "request": "launch",
             "name": "Build",
             "runtimeExecutable": "yarn",
-            "runtimeArgs": ["build"
+            "runtimeArgs": [
+                "build"
             ], // Reference the `update_config` script
             "skipFiles": [
                 "<node_internals>/**"
@@ -53,6 +54,75 @@
             }
         },
         {
+            "name": "Debug Jest Tests",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": [
+                "test",
+                "--runInBand",
+                "--no-cache",
+                "--watchAll=false"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "NODE_ENV": "test"
+            }
+        },
+        {
+            "name": "Debug Current Jest Test",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": [
+                "test",
+                "--runInBand",
+                "--no-cache",
+                "--watchAll=false",
+                "--testNamePattern=${input:testName}",
+                "--verbose"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "NODE_ENV": "test"
+            }
+        },
+        {
+            "name": "Debug Jest Test File",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": [
+                "test",
+                "--runInBand",
+                "--no-cache",
+                "--watchAll=false",
+                "${relativeFile}"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**",
+                "**/node_modules/**"
+            ],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "NODE_ENV": "test"
+            }
+        },
+        {
             "name": "Python: FastAPI",
             "type": "debugpy",
             "request": "launch",
@@ -61,6 +131,14 @@
                 "src.app.main:app",
                 "--reload"
             ]
+        }
+    ],
+    "inputs": [
+        {
+            "id": "testName",
+            "description": "Test name pattern",
+            "default": "",
+            "type": "promptString"
         }
     ]
 }

@@ -1,7 +1,3 @@
-/**
- * Simple integration test for config.ts
- */
-
 import { test, expect, describe, afterEach } from '@jest/globals';
 import { loadConfig } from '../../src/utils/config';
 import { existsSync, rmSync } from 'fs';

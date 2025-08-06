@@ -17,7 +17,7 @@
         // bind preinstalled node_modules to avoid reinstalling them
         "source=actual-updater-node_modules,target=/workspaces/actual-updater/node_modules,type=volume"
     ],
-    "postCreateCommand": "yarn install",
+    "postCreateCommand": "yarn install && pip install --upgrade pip && pip install -r requirements.txt",
     "postAttachCommand": "supervisorctl status",
     "overrideCommand": false,
     "customizations": {
@@ -29,7 +29,8 @@
                 "ms-python.black-formatter",
                 "ms-python.debugpy",
                 "ms-python.python",
-                "ms-python.vscode-pylance"
+                "ms-python.vscode-pylance",
+                "Orta.vscode-jest"
             ]
         }
     }

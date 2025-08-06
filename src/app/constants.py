@@ -1,0 +1,21 @@
+# was taken from: https://github.com/eshaham/israeli-bank-scrapers/blob/master/src/definitions.ts
+SUPPORTED_BANKS = [
+    'Bank Hapoalim',
+    'Bank Leumi',
+    'Mizrahi Bank',
+    'Discount Bank',
+    'Mercantile Bank',
+    'Bank Otsar Hahayal',
+    'Max',
+    'Visa Cal',
+    'Isracard',
+    'Amex',
+    'Union',
+    'Beinleumi',
+    'Massad',
+    'Bank Yahav',
+    'Beyahad Bishvilha',
+    'One Zero',
+    'Behatsdaa',
+    'Pagi',
+]

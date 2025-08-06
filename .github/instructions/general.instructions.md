@@ -83,6 +83,7 @@ This is the **Actual Updater** project - a comprehensive system for automaticall
 - **Dev Container**: Use the provided dev container with Actual + Authelia
 - **Node Version**: Use Node.js 18.19.0 (specified in .nvmrc)
 - **Dependencies**: Install via `yarn` for TypeScript, `pip` for Python
+- **Running Code**: Use `yarn start` to run the TypeScript service, `yarn start:dev` for development with watch mode
 - **Services**: Start Actual (port 5006) and Authelia (port 9091) for development
 
 ## Key Dependencies

@@ -193,17 +193,18 @@ data/
 ### Config Schema
 ```yaml
 oidc:
-    client_id: "<your-client-id>"
-    client_secret: "<your-client-secret>"
-    server_url: "https://authelia.example.com"
+  clientId: "<your-client-id>"
+  clientSecret: "<your-client-secret>"
+  serverUrl: "https://authelia.example.com"
 actual:
-    actual_server_url: "https://actual.example.com"
-    api_data_directory: "./data"
-    actual_server_db: ".actual-server/server-files/accounts.db" # for automatic admin token extraction
-    admin_token: "<admin-token>"  # alternatively add token manually if actual_server_db not used
-chron-job:
-    schedule: "0 * * * *"  # Example cron schedule for hourly sync
-data_directory: "./data"
+  actualServerUrl: "https://actual.example.com"
+  # Choose ONE of the following:
+  actualServerDb: ".actual-server/server-files/accounts.db" # for automatic admin token extraction
+  adminToken: "<admin-token>"  # alternatively add token manually if actualServerDb not used
+cronJob:
+  schedule: "0 * * * *"  # Example cron schedule for hourly sync
+# Optional - defaults to "./data" if not specified:
+dataDirectory: "./data"
 ```
 
 ### Database Schema

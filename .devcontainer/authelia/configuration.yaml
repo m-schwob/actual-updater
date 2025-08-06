@@ -24,12 +24,17 @@ access_control:
 session:
   name: authelia_session
   secret: "sessionsecret"
-  expiration: 3600
-  inactivity: 300
+  # expiration: 1h     # Absolute session expiration
+  # inactivity: 5m     # Inactivity timeout
   domain: 127.0.0.1
 
 identity_providers:
   oidc:
+    # lifespans:
+    #   access_token: '1h'
+    #   authorize_code: '1m'
+    #   id_token: '1h'
+    #   refresh_token: '90m'
     enable_client_debug_messages: true
     jwks:
       - key_id: 'oid_id'
@@ -65,9 +70,9 @@ identity_providers:
           MZbbjJQ5cIL1U66DA//dajI=
           -----END PRIVATE KEY-----
     clients:
-      - client_id: updater-client-id
+      - client_id: actual-updater-client-id
         client_name: 'Actual Updater'
-        client_secret: updater-client-secret
+        client_secret: actual-updater-client-secret
         authorization_policy: one_factor
         redirect_uris:
           - "http://127.0.0.1:8000/oidc/callback"

@@ -19,5 +19,9 @@
         "test_*.py"
     ],
     "python.testing.pytestEnabled": false,
-    "python.testing.unittestEnabled": true
+    "python.testing.unittestEnabled": true,
+    "jest.jestCommandLine": "yarn test",
+    "jest.runMode": "on-demand",
+    "jest.rootPath": ".",
+    "typescript.preferences.includePackageJsonAutoImports": "auto"
 }

@@ -13,15 +13,18 @@ module.exports = {
   ],
   testMatch: ['**/*.test.ts', '**/*.spec.ts'],
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': ['ts-jest', {
+      tsconfig: 'tsconfig.dev.json'
+    }],
   },
-  moduleResolution: 'node',
   moduleFileExtensions: ['ts', 'js', 'json'],
+  extensionsToTreatAsEsm: [],
+  testTimeout: 30000,
+  // Ensure source maps are generated for debugging
   globals: {
     'ts-jest': {
-      tsconfig: 'tsconfig.dev.json'
+      tsconfig: 'tsconfig.dev.json',
+      isolatedModules: true
     }
-  },
-  extensionsToTreatAsEsm: [],
-  testTimeout: 30000
+  }
 };

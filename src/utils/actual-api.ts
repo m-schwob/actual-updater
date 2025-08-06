@@ -6,15 +6,19 @@
 import * as api from '@actual-app/api';
 import { Budget, Account } from './types';
 import { ActualConfig } from './config';
+import path from 'path';
+import fs from 'fs';
 
 /**
  * Actual Budget API client with state management
  */
 export class ActualApiClient {
     private currentBudget: Budget | null = null;
+    private apiDataDirectory: string;
 
-    private constructor() {
+    private constructor(apiDataDirectory: string) {
         // Private constructor for static factory pattern
+        this.apiDataDirectory = apiDataDirectory;
     }
     /**
      * Initialize the Actual API with OIDC authentication and return client instance
@@ -39,7 +43,7 @@ export class ActualApiClient {
             console.log('Successfully connected to Actual Budget server');
 
             // Create and return the client instance
-            return new ActualApiClient();
+            return new ActualApiClient(config.apiDataDirectory);
 
         } catch (error) {
             console.error('Failed to initialize Actual API:', error);
@@ -81,15 +85,17 @@ export class ActualApiClient {
             // Download the budget (downloads if needed and opens it)
             await api.downloadBudget(budget.groupId);
 
-            // Save current budget state
-            this.currentBudget = budget;
-
-            console.log(`Successfully downloaded budget: ${budget.name}`);
-
         } catch (error) {
             console.error(`Failed to download budget ${budget.name}:`, error);
+            console.log(`Failed to download budget ${budget.name}, attempting to recover...`);
+            await this.recoverFromSyncError(budget);
+
             throw new Error(`Failed to download budget ${budget.name}: ${error}`);
         }
+
+        // Save current budget state
+        this.currentBudget = budget;
+        console.log(`Successfully downloaded budget: ${budget.name}`);
     }
 
     /**
@@ -152,6 +158,42 @@ export class ActualApiClient {
             console.log('Actual API connection closed');
         } catch (error) {
             console.error('Error closing Actual API:', error);
+        }
+    }
+
+    /**
+     * Recover from sync error by clearing local cache and retrying download
+     */
+    private async recoverFromSyncError(budget: Budget): Promise<void> {
+        try {
+            console.log(`Attempting to recover from sync error for budget: ${budget.name}`);
+
+            // Get local budgets to find the correct cache folder by groupId
+            const localBudgets = await api.getBudgets();
+            const matchingBudget = localBudgets.find((localBudget: any) =>
+                localBudget.groupId === budget.groupId && localBudget.id != null
+            );
+
+            if (matchingBudget) {
+                // The local budget ID is used as the folder name in budget-files
+                const budgetFolderPath = path.join(this.apiDataDirectory, matchingBudget.id);
+
+                if (fs.existsSync(budgetFolderPath)) {
+                    console.log(`Removing corrupted cache directory: ${budgetFolderPath}`);
+                    fs.rmSync(budgetFolderPath, { recursive: true, force: true });
+                } else {
+                    console.log(`Cache directory not found: ${budgetFolderPath}`);
+                }
+            } else {
+                console.log(`Could not find local budget with groupId: ${budget.groupId}`);
+            }
+
+            // Now retry the download
+            console.log(`Retrying download for budget: ${budget.name}`);
+            await api.downloadBudget(budget.groupId);
+        } catch (recoveryError) {
+            console.error(`Failed to recover from sync error for budget ${budget.name}:`, recoveryError);
+            throw new Error(`Failed to recover from sync error for budget ${budget.name}: ${recoveryError}`);
         }
     }
 }

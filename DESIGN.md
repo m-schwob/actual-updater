@@ -210,13 +210,15 @@ dataDirectory: "./data"
 ### Database Schema
 ```sql
 CREATE TABLE accounts (
+    -- Actual-side information
     budget_id INTEGER PRIMARY KEY NOT NULL,
+    actual_account_id TEXT PRIMARY KEY NOT NULL,
     -- Bank-side information
     financial_provider TEXT NOT NULL,
     financial_provider_account TEXT NOT NULL,
     password TEXT NOT NULL,  -- Encrypted financial_provider login password
-    -- Actual-side information
-    actual_account_id TEXT PRIMARY KEY NOT NULL,  -- Account ID in Actual Budget
+    -- Actual updater information
+    removed BOOLEAN NOT NULL DEFAULT FALSE,  -- If financial provider is removed from Actual Updater 
 );
 ```
 

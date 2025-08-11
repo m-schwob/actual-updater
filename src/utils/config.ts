@@ -100,7 +100,7 @@ export function loadConfig(configPath: string = process.env.CONFIG_PATH || './co
 
         // Set default dataDirectory if not provided and create 'budget-files' subdirectory
         if (!rawConfig.dataDirectory) {
-            rawConfig.dataDirectory = './data';
+            rawConfig.dataDirectory = '/data';
         }
         const budgetFilesDir = join(rawConfig.dataDirectory, 'budget-files');
         if (!existsSync(budgetFilesDir)) {

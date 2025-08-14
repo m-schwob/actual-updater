@@ -1,8 +1,13 @@
 import { CompanyTypes, createScraper, ScraperCredentials, ScraperOptions } from 'israeli-bank-scrapers';
-import { Config, AccountToScrapeConfig } from '../commonTypes';
 import { TransactionsAccount } from 'israeli-bank-scrapers/lib/transactions';
+import { Account } from '../utils/types';
 
-async function getAccountResults(options: ScraperOptions, credentials: ScraperCredentials): Promise<TransactionsAccount[] | undefined> {
+interface ScrapingConfig {
+    startDate: Date;
+    showBrowser?: boolean;
+}
+
+async function getAccountResults(options: ScraperOptions, credentials: ScraperCredentials): Promise<TransactionsAccount[]> {
     const scraper = createScraper(options);
     const scrapeResult = await scraper.scrape(credentials);
     if (scrapeResult.success) {
@@ -16,17 +21,40 @@ async function getAccountResults(options: ScraperOptions, credentials: ScraperCr
     else {
         throw new Error(`${scrapeResult.errorType}: ${scrapeResult.errorMessage}`);
     }
+    return [];
 }
 
 
-export async function getAllAccountsResults(config: Config): Promise<TransactionsAccount[]> {
+export async function scrapeAllAccounts(accounts: Account[], config: ScrapingConfig): Promise<TransactionsAccount[]> {
     let transactionsAccount: TransactionsAccount[] = [];
-    for (const account of config.scraping.accountsToScrape) { //TODO make sure it doing it parallel and not serial
-        account.options.startDate = new Date('2024-03-25'); // TODO remove
-        let accounts: TransactionsAccount[] | undefined = await getAccountResults(account.options, account.loginFields)
-        if (accounts != undefined) {
-            transactionsAccount.push(...accounts)
+
+    for (const account of accounts) {
+        try {
+            // Validate bank name against CompanyTypes enum
+            const bankName = account.financial_provider as keyof typeof CompanyTypes;
+            if (!CompanyTypes[bankName]) {
+                throw new Error(`Unsupported bank: ${account.financial_provider}`);
+            }
+
+            const options: ScraperOptions = {
+                companyId: CompanyTypes[bankName],
+                startDate: config.startDate,
+                showBrowser: config.showBrowser || false,
+            };
+
+            const credentials: ScraperCredentials = {
+                username: account.username,
+                password: account.password || '',
+            };
+
+            console.log(`Scraping account ${account.actual_account_id} from ${account.financial_provider}`);
+            const accounts = await getAccountResults(options, credentials);
+            transactionsAccount.push(...accounts);
+        } catch (error) {
+            console.error(`Failed to scrape account ${account.actual_account_id}: ${error instanceof Error ? error.message : String(error)}`);
+            // Continue with other accounts instead of failing completely
         }
     }
+
     return transactionsAccount;
 }

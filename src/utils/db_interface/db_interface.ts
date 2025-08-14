@@ -5,16 +5,7 @@
 
 import { spawn } from 'child_process';
 import { join } from 'path';
-
-/**
- * Account data structure returned from the database
- */
-export interface Account {
-    actual_account_id: string;
-    financial_provider: string;
-    financial_provider_account: string;
-    password?: string;
-}
+import { Account } from '../types';
 
 /**
  * Error structure returned from CLI operations

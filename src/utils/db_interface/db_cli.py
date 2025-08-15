@@ -10,7 +10,7 @@ import json
 import sys
 
 
-from src.utils.db_interface import load_accounts
+from src.utils.db_interface.db_interface import load_accounts
 from src.utils.constants import DB_PATH
 
 

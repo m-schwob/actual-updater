@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 from io import StringIO
-from src.utils.credential_encryption import encrypt_password, decrypt_password, main
+from src.utils.db_interface.credential_encryption import encrypt_password, decrypt_password, main
 from cryptography.fernet import InvalidToken
 
 

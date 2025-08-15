@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "actual-updater"
+version = "0.1.0"
+description = "Mixed Python/TypeScript application for importing Israeli bank transactions into Actual Budget"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "nicegui",
+    "authlib",
+    "uvicorn[standard]",
+    "cryptography",
+    "keyring",
+    "keyrings.alt",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "pylint", 
+    "coverage"
+]
+
+# Essential for making src/ modules importable
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+exclude = ["tests*"]
+
+# VS Code Black configuration
+[tool.black]
+line-length = 120
+target-version = ['py311']
+
+# VS Code Pylint configuration  
+[tool.pylint.format]
+max-line-length = 120
+
+# Test coverage configuration
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+[tool.coverage.html]
+directory = "coverage"

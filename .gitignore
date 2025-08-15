@@ -12,3 +12,4 @@ package-lock.json
 .devcontainer/supervisord.pid
 /data
 /coverage/
+actual_updater.egg-info/

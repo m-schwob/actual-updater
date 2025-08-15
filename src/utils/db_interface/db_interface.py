@@ -1,7 +1,7 @@
 from os import PathLike
 import sqlite3
 from typing import List, Dict, Optional
-from src.utils.credential_encryption import encrypt_password, decrypt_password
+from src.utils.db_interface.credential_encryption import encrypt_password, decrypt_password
 from src.utils.constants import DB_PATH
 
 

@@ -24,10 +24,11 @@ RUN npm install --location=global @actual-app/sync-server@${ACTUAL_SERVER_VERSIO
 # Install Python dependencies
 ENV VIRTUAL_ENV="/opt/venv"
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-COPY requirements.txt /tmp/requirements.txt
+COPY pyproject.toml /tmp/pyproject.toml
 RUN python3 -m venv $VIRTUAL_ENV \
     && $VIRTUAL_ENV/bin/pip install --upgrade pip \
-    && $VIRTUAL_ENV/bin/pip install --no-cache-dir -r /tmp/requirements.txt \
+    && $VIRTUAL_ENV/bin/pip install -e /tmp/ \
+    && $VIRTUAL_ENV/bin/pip install -e /tmp/[dev] \
     && rm -r /tmp
 
 # Set workdir to VS Code default workspace mount for devcontainer

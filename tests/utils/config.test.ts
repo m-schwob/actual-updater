@@ -40,16 +40,18 @@ describe('Integration Tests', () => {
   });
 
   test('should load config from explicit path parameter', () => {
-    testLoadConfig('./config.yaml');
+    testLoadConfig('tests/sources/utils/validConfig.yaml');
   });
 
   test('should load config from CONFIG_PATH environment variable', () => {
-    process.env.CONFIG_PATH = './config.yaml';
+    process.env.CONFIG_PATH = 'tests/sources/utils/validConfig.yaml';
     testLoadConfig();
   });
 });
 
 describe('Unit Tests', () => {
-  // TODO: Add unit tests for individual config functions
-  // e.g., validateRawConfig, processAdminToken, buildFinalConfig, etc.
+  test('should throw error for invalid config file', () => {
+    process.env.CONFIG_PATH = 'tests/sources/utils/missingScheduleConfig.yaml';
+    expect(() => loadConfig()).toThrowError(`Required configuration field missing: cronJob.schedule`);
+  });
 });

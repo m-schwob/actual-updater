@@ -5,23 +5,26 @@
 
 import { ActualApiClient } from '../utils/actual-api';
 import { ActualConfig } from '../utils/config';
-import { Budget, BudgetProvider, AccountsLink } from '../utils/types';
+import { Budget, BudgetProvider, ScrapingOptions } from '../utils/types';
 import { loadAccounts } from '../utils/db_interface/db_interface';
+import { scrapeBudgetProviders } from './scraper';
 
 /**
  * Main service class that orchestrates the entire import process
  */
 export class ActualUpdaterService {
     private apiClient: ActualApiClient;
+    private scrapingOptions: ScrapingOptions;
 
-    private constructor(apiClient: ActualApiClient) {
+    private constructor(apiClient: ActualApiClient, scrapingOptions: ScrapingOptions) {
         this.apiClient = apiClient;
+        this.scrapingOptions = scrapingOptions;
     }
 
     /**
      * Create and initialize a new ActualUpdaterService instance
      */
-    static async create(apiConfig: ActualConfig): Promise<ActualUpdaterService> {
+    static async create(apiConfig: ActualConfig, scrapingOptions: ScrapingOptions): Promise<ActualUpdaterService> {
         try {
             console.log('Initializing Actual Updater Service...');
 
@@ -29,7 +32,7 @@ export class ActualUpdaterService {
             const apiClient = await ActualApiClient.initialize(apiConfig);
             console.log('Service initialized successfully');
 
-            return new ActualUpdaterService(apiClient);
+            return new ActualUpdaterService(apiClient, scrapingOptions);
         } catch (error) {
             console.error('Failed to initialize service:', error);
             throw error;
@@ -111,10 +114,32 @@ export class ActualUpdaterService {
             const budgetAccounts = await this.apiClient.getBudgetAccounts();
             console.log(`Found ${budgetAccounts.length} accounts in budget: ${budget.name}`);
 
-            // TODO: Add bank scraping and transaction import logic here
-            // For now, just log the accounts
-            budgetAccounts.forEach(account => {
-                console.log(`  - Account: ${account.name} (${account.id})`);
+            if (budgetAccounts.length === 0) {
+                console.log(`No accounts found in budget: ${budget.name}, skipping`);
+                return;
+            }
+
+            // Extract account IDs for database lookup
+            const budgetAccountIds = budgetAccounts.map(account => account.id);
+
+            // Load stored credentials for these accounts from database
+            console.log(`Loading stored credentials for ${budgetAccountIds.length} accounts...`);
+            let budgetProviders: BudgetProvider[] = [];
+
+            try {
+                budgetProviders = await loadAccounts(budget.groupId, budgetAccountIds);
+                console.log(`Found ${budgetProviders.length} accounts with stored credentials`);
+            } catch (error) {
+                console.warn(`Failed to load accounts from database for budget ${budget.name}:`, error);
+            }
+
+            // Scrape providers data for the listed accounts
+            console.log(`Scraping providers transactions...`);
+            const linkedScrappedAccounts = await scrapeBudgetProviders(budgetProviders, this.scrapingOptions);
+        
+            //  Temporarily log all linked scraped accounts
+            linkedScrappedAccounts.forEach(account => {
+                console.log(`Linked Account: ${account.actualAccountId}, Transactions: ${account.scrapedTransactions.txns.length}`);
             });
 
             // Sync the budget to save any changes

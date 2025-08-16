@@ -16,8 +16,8 @@ async function main(): Promise<void> {
         // Load configuration
         console.log('Loading configuration...');
         const config = loadConfig();
-        
-        const service = await ActualUpdaterService.create(config.actual);
+
+        const service = await ActualUpdaterService.create(config.actual, config.scrapingOptions);
         await service.start();
     } catch (error) {
         console.error('Service failed to start:', error);

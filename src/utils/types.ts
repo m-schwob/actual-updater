@@ -37,3 +37,10 @@ export interface TransactionsAccountLink {
     actualAccountId: string;
     scrapedTransactions: TransactionsAccount;
 }
+
+/**
+ * Configuration for scraping providers
+ */
+export interface ScrapingOptions {
+    scrapeSince: Date;
+}

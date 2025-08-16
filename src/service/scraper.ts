@@ -1,11 +1,7 @@
 import { CompanyTypes, createScraper, ScraperCredentials, ScraperOptions } from 'israeli-bank-scrapers';
 import { TransactionsAccount } from 'israeli-bank-scrapers/lib/transactions';
-import { BudgetProvider, AccountsLink, TransactionsAccountLink } from '../utils/types';
+import { BudgetProvider, AccountsLink, TransactionsAccountLink, ScrapingOptions } from '../utils/types';
 
-interface ScrapingConfig {
-    startDate: Date;
-    showBrowser?: boolean;
-}
 
 
 async function scrapeFinancialProvider(options: ScraperOptions, credentials: ScraperCredentials): Promise<TransactionsAccount[]> {
@@ -47,7 +43,7 @@ async function scrapeBudgetProviderAccounts(options: ScraperOptions, credentials
 }
 
 
-export async function scrapeBudgetProviders(budgetProviders: BudgetProvider[], config: ScrapingConfig): Promise<TransactionsAccountLink[]> {
+export async function scrapeBudgetProviders(budgetProviders: BudgetProvider[], config: ScrapingOptions): Promise<TransactionsAccountLink[]> {
     let linkedScrappedAccounts: TransactionsAccountLink[] = [];
 
     for (const provider of budgetProviders) {
@@ -59,7 +55,8 @@ export async function scrapeBudgetProviders(budgetProviders: BudgetProvider[], c
             }
             const options: ScraperOptions = {
                 companyId: CompanyTypes[bankName],
-                startDate: config.startDate,
+                // TODO we need to make sure it is not before the minimum allowed time difference for the specific scraper
+                startDate: config.scrapeSince,
             };
 
             const credentials: ScraperCredentials = {

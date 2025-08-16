@@ -205,6 +205,8 @@ cronJob:
   schedule: "0 * * * *"  # Example cron schedule for hourly sync
 # Optional - defaults to "./data" if not specified:
 dataDirectory: "./data"
+scraperOptions:
+  scrapingOptions: "2023-01-01T00:00:00Z"  # DD-MM-YYYY date to start scraping from
 ```
 
 ### Database Schema

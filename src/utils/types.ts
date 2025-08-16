@@ -11,12 +11,17 @@ export type Budget = APIFileEntity;
 export type ActualAccount = APIAccountEntity;
 
 /**
- * Local database account data structure with bank credentials
+ * Local database data structure
  */
-export interface Account {
-    actual_account_id: string;
-    financial_provider: string;
-    financial_provider_accounts: string[];
+export interface BudgetFinancialProvider {
+    budgetId: string;
+    financialProvider: string;
+    accountsMap: AccountsLink[];
     username: string;
     password?: string;
+}
+
+export interface AccountsLink {
+    actualAccountId: string;
+    financialProviderAccount: string;
 }

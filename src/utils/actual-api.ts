@@ -4,7 +4,7 @@
  */
 
 import * as api from '@actual-app/api';
-import { Budget, Account } from './types';
+import { Budget, ActualAccount } from './types';
 import { ActualConfig } from './config';
 import path from 'path';
 import fs from 'fs';
@@ -101,7 +101,7 @@ export class ActualApiClient {
     /**
      * Get all accounts from the currently opened budget
      */
-    async getBudgetAccounts(): Promise<Account[]> {
+    async getBudgetAccounts(): Promise<ActualAccount[]> {
         try {
             if (!this.currentBudget) {
                 throw new Error('No budget is currently loaded. Call downloadBudget() first.');

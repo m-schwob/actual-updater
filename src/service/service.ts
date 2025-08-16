@@ -5,7 +5,7 @@
 
 import { ActualApiClient } from '../utils/actual-api';
 import { ActualConfig } from '../utils/config';
-import { Budget, Account } from '../utils/types';
+import { Budget, BudgetFinancialProvider, AccountsLink } from '../utils/types';
 import { loadAccounts } from '../utils/db_interface/db_interface';
 
 /**
@@ -108,12 +108,12 @@ export class ActualUpdaterService {
             await this.apiClient.downloadBudget(budget);
 
             // Get accounts for this budget
-            const accounts = await this.apiClient.getBudgetAccounts();
-            console.log(`Found ${accounts.length} accounts in budget: ${budget.name}`);
+            const budgetAccounts = await this.apiClient.getBudgetAccounts();
+            console.log(`Found ${budgetAccounts.length} accounts in budget: ${budget.name}`);
 
             // TODO: Add bank scraping and transaction import logic here
             // For now, just log the accounts
-            accounts.forEach(account => {
+            budgetAccounts.forEach(account => {
                 console.log(`  - Account: ${account.name} (${account.id})`);
             });
 

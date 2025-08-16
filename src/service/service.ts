@@ -5,7 +5,8 @@
 
 import { ActualApiClient } from '../utils/actual-api';
 import { ActualConfig } from '../utils/config';
-import { Budget } from '../utils/types';
+import { Budget, Account } from '../utils/types';
+import { loadAccounts } from '../utils/db_interface/db_interface';
 
 /**
  * Main service class that orchestrates the entire import process
@@ -63,22 +64,8 @@ export class ActualUpdaterService {
             const budgets = await this.apiClient.getRemoteBudgets();
             console.log(`Found ${budgets.length} budgets to process`);
 
-            // Step 2: Process each budget
-            for (let i = 0; i < budgets.length; i++) {
-                const budget = budgets[i]!; // Non-null assertion since we're within bounds
-                console.log(`\n--- Processing budget ${i + 1}/${budgets.length} ---`);
-                console.log(`Name: "${budget.name}"`);
-                console.log(`SyncId: ${budget.groupId}`);
-                const ownerUser = budget.usersWithAccess.find(user => user.userId === budget.owner);
-                const ownerUserName = ownerUser ? ownerUser.userName : 'Unknown';
-                console.log(`User Name: ${ownerUserName}`);
-
-                await this.processBudget(budget);                // Add delay between budgets to allow services to settle
-                if (i < budgets.length - 1) {
-                    console.log('Waiting before processing next budget...');
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                }
-            }
+            // Step 2: Process each budget via helper
+            await this.processEachBudget(budgets);
 
             console.log('\nImport workflow completed successfully');
 
@@ -87,6 +74,28 @@ export class ActualUpdaterService {
             throw error;
         }
     }
+
+
+    /**
+     * Helper to log and process a single budget.
+     * Separated from the main loop to improve readability and testability.
+     */
+    private async processEachBudget(budgets: Budget[]): Promise<void> {
+        for (const [i, budget] of budgets.entries()) {
+            console.log(`\n--- Processing budget ${i + 1}/${budgets.length} ---`);
+            console.log(`Name: "${budget.name}"`);
+            console.log(`SyncId: ${budget.groupId}`);
+            const ownerUser = budget.usersWithAccess.find(user => user.userId === budget.owner);
+            const ownerUserName = ownerUser ? ownerUser.userName : 'Unknown';
+            console.log(`User Name: ${ownerUserName}`);
+
+            await this.processBudget(budget);
+
+            // Add delay between budgets to allow services to settle
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+    }
+
 
     /**
      * Process a single budget - get accounts and prepare for transaction import

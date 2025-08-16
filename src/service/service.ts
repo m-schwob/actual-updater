@@ -5,7 +5,7 @@
 
 import { ActualApiClient } from '../utils/actual-api';
 import { ActualConfig } from '../utils/config';
-import { Budget, BudgetFinancialProvider, AccountsLink } from '../utils/types';
+import { Budget, BudgetProvider, AccountsLink } from '../utils/types';
 import { loadAccounts } from '../utils/db_interface/db_interface';
 
 /**

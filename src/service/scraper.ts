@@ -1,11 +1,12 @@
 import { CompanyTypes, createScraper, ScraperCredentials, ScraperOptions } from 'israeli-bank-scrapers';
 import { TransactionsAccount } from 'israeli-bank-scrapers/lib/transactions';
-import { Account } from '../utils/types';
+import { BudgetProvider, AccountsLink, TransactionsAccountLink } from '../utils/types';
 
 interface ScrapingConfig {
     startDate: Date;
     showBrowser?: boolean;
 }
+
 
 async function scrapeFinancialProvider(options: ScraperOptions, credentials: ScraperCredentials): Promise<TransactionsAccount[]> {
     const scraper = createScraper(options);
@@ -24,57 +25,57 @@ async function scrapeFinancialProvider(options: ScraperOptions, credentials: Scr
     return [];
 }
 
-async function scrapeAccounts(options: ScraperOptions, credentials: ScraperCredentials, financial_provider_accounts: string[]): Promise<TransactionsAccount[]> {
-    const allAccounts = await scrapeFinancialProvider(options, credentials);
+async function scrapeBudgetProviderAccounts(options: ScraperOptions, credentials: ScraperCredentials, accountMap: AccountsLink[]): Promise<TransactionsAccountLink[]> {
+    const allScrapedAccounts = await scrapeFinancialProvider(options, credentials);
 
-    // Filter to only return the specific accounts we're interested in
-    const filteredAccounts = allAccounts.filter(account =>
-        financial_provider_accounts.includes(account.accountNumber)
-    );
+    const linkedScrappedAccounts: TransactionsAccountLink[] = [];
 
-    if (filteredAccounts.length === 0) {
-        console.warn(`No accounts found with account numbers: ${financial_provider_accounts.join(', ')}. Available accounts: ${allAccounts.map(a => a.accountNumber).join(', ')}`);
-    } else if (filteredAccounts.length < financial_provider_accounts.length) {
-        const foundAccountNumbers = filteredAccounts.map(a => a.accountNumber);
-        const missingAccountNumbers = financial_provider_accounts.filter(num => !foundAccountNumbers.includes(num));
-        console.warn(`Some accounts not found. Missing: ${missingAccountNumbers.join(', ')}. Found: ${foundAccountNumbers.join(', ')}`);
+    for (const accountLink of accountMap) {
+        const scrapedAccount = allScrapedAccounts.find(
+            scrapedAccount => scrapedAccount.accountNumber === accountLink.financialProviderAccountId);
+
+        if (scrapedAccount)
+            linkedScrappedAccounts.push({
+                actualAccountId: accountLink.actualAccountId,
+                scrapedTransactions: scrapedAccount
+            });
+        else
+            console.warn(`Account ${accountLink.financialProviderAccountId} not found in scraped accounts`);
     }
 
-    return filteredAccounts;
+    return linkedScrappedAccounts;
 }
 
 
-export async function scrapeAllAccounts(accounts: Account[], config: ScrapingConfig): Promise<TransactionsAccount[]> {
-    let transactionsAccount: TransactionsAccount[] = [];
+export async function scrapeBudgetProviders(budgetProviders: BudgetProvider[], config: ScrapingConfig): Promise<TransactionsAccountLink[]> {
+    let linkedScrappedAccounts: TransactionsAccountLink[] = [];
 
-    for (const account of accounts) {
+    for (const provider of budgetProviders) {
         try {
             // Validate bank name against CompanyTypes enum
-            const bankName = account.financial_provider as keyof typeof CompanyTypes;
+            const bankName = provider.financialProvider as keyof typeof CompanyTypes;
             if (!CompanyTypes[bankName]) {
-                throw new Error(`Unsupported bank: ${account.financial_provider}`);
+                throw new Error(`Unsupported bank: ${provider.financialProvider}`);
             }
-
             const options: ScraperOptions = {
                 companyId: CompanyTypes[bankName],
                 startDate: config.startDate,
-                showBrowser: config.showBrowser || false,
             };
 
             const credentials: ScraperCredentials = {
-                username: account.username,
-                password: account.password || '',
+                username: provider.financialProviderUsername,
+                password: provider.financialProviderUsername || '',
             };
 
-            console.log(`Scraping accounts for ${account.financial_provider} (${account.username}): ${account.financial_provider_accounts.join(', ')}`);
+            console.log(`Scraping accounts for ${provider.financialProvider} (${provider.financialProviderUsername})`);
 
-            const scrapedAccounts = await scrapeAccounts(options, credentials, account.financial_provider_accounts);
-            transactionsAccount.push(...scrapedAccounts);
+            const scrapedAccounts = await scrapeBudgetProviderAccounts(options, credentials, provider.accountsMapping);
+            linkedScrappedAccounts.push(...scrapedAccounts);
         } catch (error) {
-            console.error(`Failed to scrape account ${account.actual_account_id}: ${error instanceof Error ? error.message : String(error)}`);
-            // Continue with other accounts instead of failing completely
+            console.error(`Failed to scrape accounts for provider ${provider.financialProvider} (${provider.financialProviderUsername}):`, error);
+            // Log the error but do not throw to allow processing of other providers
         }
     }
 
-    return transactionsAccount;
+    return linkedScrappedAccounts;
 }

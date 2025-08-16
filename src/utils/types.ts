@@ -5,23 +5,35 @@
 
 // Import official types from @actual-app/api
 import type { APIFileEntity, APIAccountEntity } from '@actual-app/api/@types/loot-core/src/server/api-models';
+import { TransactionsAccount } from 'israeli-bank-scrapers/lib/transactions';
 
 // Re-export with cleaner names for Actual Budget entities
 export type Budget = APIFileEntity;
 export type ActualAccount = APIAccountEntity;
 
 /**
- * Local database data structure
+ * Represent the Budget Provider data structure returned form the database interface
  */
-export interface BudgetFinancialProvider {
+export interface BudgetProvider {
     budgetId: string;
     financialProvider: string;
-    accountsMap: AccountsLink[];
-    username: string;
-    password?: string;
+    accountsMapping: AccountsLink[];
+    financialProviderUsername: string;
+    financialProviderPassword?: string;
 }
 
+/**
+ * Represents the Accounts Link structure returned from the database interface as part of BudgetProvider
+ */
 export interface AccountsLink {
     actualAccountId: string;
-    financialProviderAccount: string;
+    financialProviderAccountId: string;
+}
+
+/**
+ * Link between Actual accounts and scraped transactions
+ */
+export interface TransactionsAccountLink {
+    actualAccountId: string;
+    scrapedTransactions: TransactionsAccount;
 }

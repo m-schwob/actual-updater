@@ -150,6 +150,25 @@ export class ActualApiClient {
     }
 
     /**
+     * Import transactions into an account in the currently opened budget
+     */
+    async importTransactions(accountId: string, transactions: any[]): Promise<void> {
+        try {
+            if (!this.currentBudget) {
+                throw new Error('No budget is currently loaded. Call downloadBudget() first.');
+            }
+
+            console.log(`Importing ${transactions.length} transactions into account ${accountId}`);
+            await api.importTransactions(accountId, transactions);
+            console.log(`Imported ${transactions.length} transactions into account ${accountId}`);
+        } catch (error) {
+            console.error(`Failed to import transactions into account ${accountId}:`, error);
+            throw new Error(`Failed to import transactions into account ${accountId}: ${error}`);
+        }
+    }
+
+
+    /**
      * Close the API connection
      */
     async close(): Promise<void> {

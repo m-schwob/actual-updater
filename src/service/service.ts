@@ -8,6 +8,7 @@ import { ActualConfig } from '../utils/config';
 import { Budget, BudgetProvider, ScrapingOptions } from '../utils/types';
 import { loadAccounts } from '../utils/db_interface/db_interface';
 import { scrapeBudgetProviders } from './scraper';
+import { importScrapedTransactions } from './importer';
 
 /**
  * Main service class that orchestrates the entire import process
@@ -137,10 +138,9 @@ export class ActualUpdaterService {
             console.log(`Scraping providers transactions...`);
             const linkedScrappedAccounts = await scrapeBudgetProviders(budgetProviders, this.scrapingOptions);
         
-            //  Temporarily log all linked scraped accounts
-            linkedScrappedAccounts.forEach(account => {
-                console.log(`Linked Account: ${account.actualAccountId}, Transactions: ${account.scrapedTransactions.txns.length}`);
-            });
+            // Import scraped transactions into Actual for this budget
+            console.log(`Importing scraped transactions...`);
+            await importScrapedTransactions(this.apiClient, linkedScrappedAccounts);
 
             // Sync the budget to save any changes
             await this.apiClient.syncBudget();

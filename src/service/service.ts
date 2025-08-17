@@ -5,22 +5,27 @@
 
 import { ActualApiClient } from '../utils/actual-api';
 import { ActualConfig } from '../utils/config';
-import { Budget } from '../utils/types';
+import { ActualAccount, Budget, BudgetProvider, ScrapingOptions } from '../utils/types';
+import { loadAccounts } from '../utils/db_interface/db_interface';
+import { scrapeBudgetProviders } from './scraper';
+import { importScrapedTransactions } from './importer';
 
 /**
  * Main service class that orchestrates the entire import process
  */
 export class ActualUpdaterService {
     private apiClient: ActualApiClient;
+    private scrapingOptions: ScrapingOptions;
 
-    private constructor(apiClient: ActualApiClient) {
+    private constructor(apiClient: ActualApiClient, scrapingOptions: ScrapingOptions) {
         this.apiClient = apiClient;
+        this.scrapingOptions = scrapingOptions;
     }
 
     /**
      * Create and initialize a new ActualUpdaterService instance
      */
-    static async create(apiConfig: ActualConfig): Promise<ActualUpdaterService> {
+    static async create(apiConfig: ActualConfig, scrapingOptions: ScrapingOptions): Promise<ActualUpdaterService> {
         try {
             console.log('Initializing Actual Updater Service...');
 
@@ -28,7 +33,7 @@ export class ActualUpdaterService {
             const apiClient = await ActualApiClient.initialize(apiConfig);
             console.log('Service initialized successfully');
 
-            return new ActualUpdaterService(apiClient);
+            return new ActualUpdaterService(apiClient, scrapingOptions);
         } catch (error) {
             console.error('Failed to initialize service:', error);
             throw error;
@@ -59,26 +64,12 @@ export class ActualUpdaterService {
         console.log('Starting import workflow...');
 
         try {
-            // Step 1: Get all available budgets
+            // Get all available budgets
             const budgets = await this.apiClient.getRemoteBudgets();
             console.log(`Found ${budgets.length} budgets to process`);
 
-            // Step 2: Process each budget
-            for (let i = 0; i < budgets.length; i++) {
-                const budget = budgets[i]!; // Non-null assertion since we're within bounds
-                console.log(`\n--- Processing budget ${i + 1}/${budgets.length} ---`);
-                console.log(`Name: "${budget.name}"`);
-                console.log(`SyncId: ${budget.groupId}`);
-                const ownerUser = budget.usersWithAccess.find(user => user.userId === budget.owner);
-                const ownerUserName = ownerUser ? ownerUser.userName : 'Unknown';
-                console.log(`User Name: ${ownerUserName}`);
-
-                await this.processBudget(budget);                // Add delay between budgets to allow services to settle
-                if (i < budgets.length - 1) {
-                    console.log('Waiting before processing next budget...');
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                }
-            }
+            // Process each budget via helper
+            await this.processEachBudget(budgets);
 
             console.log('\nImport workflow completed successfully');
 
@@ -87,6 +78,28 @@ export class ActualUpdaterService {
             throw error;
         }
     }
+
+
+    /**
+     * Helper to log and process a single budget.
+     * Separated from the main loop to improve readability and testability.
+     */
+    private async processEachBudget(budgets: Budget[]): Promise<void> {
+        for (const [i, budget] of budgets.entries()) {
+            console.log(`\n--- Processing budget ${i + 1}/${budgets.length} ---`);
+            console.log(`Name: "${budget.name}"`);
+            console.log(`SyncId: ${budget.groupId}`);
+            const ownerUser = budget.usersWithAccess.find(user => user.userId === budget.owner);
+            const ownerUserName = ownerUser ? ownerUser.userName : 'Unknown';
+            console.log(`User Name: ${ownerUserName}`);
+
+            await this.processBudget(budget);
+
+            // Add delay between budgets to allow services to settle
+            await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+    }
+
 
     /**
      * Process a single budget - get accounts and prepare for transaction import
@@ -99,14 +112,24 @@ export class ActualUpdaterService {
             await this.apiClient.downloadBudget(budget);
 
             // Get accounts for this budget
-            const accounts = await this.apiClient.getBudgetAccounts();
-            console.log(`Found ${accounts.length} accounts in budget: ${budget.name}`);
+            const budgetAccounts = await this.apiClient.getBudgetAccounts();
+            console.log(`Found ${budgetAccounts.length} accounts in budget: ${budget.name}`);
 
-            // TODO: Add bank scraping and transaction import logic here
-            // For now, just log the accounts
-            accounts.forEach(account => {
-                console.log(`  - Account: ${account.name} (${account.id})`);
-            });
+            if (budgetAccounts.length === 0) {
+                console.log(`No accounts found in budget: ${budget.name}, skipping`);
+                return;
+            }
+
+            // Load budget providers from the database
+            const budgetProviders = await this.loadBudgetProviders(budget, budgetAccounts);
+
+            // Scrape providers data for the listed accounts
+            console.log(`Scraping providers transactions...`);
+            const linkedScrappedAccounts = await scrapeBudgetProviders(budgetProviders, this.scrapingOptions);
+
+            // Import scraped transactions into Actual for this budget
+            console.log(`Importing scraped transactions...`);
+            await importScrapedTransactions(this.apiClient, linkedScrappedAccounts);
 
             // Sync the budget to save any changes
             await this.apiClient.syncBudget();
@@ -117,5 +140,25 @@ export class ActualUpdaterService {
             console.error(`Failed to process budget ${budget.name}:`, error);
             // Continue with other budgets even if one fails
         }
+    }
+
+    /**
+     * Load all providers from the database
+     */
+    private async loadBudgetProviders(budget: Budget, budgetAccounts: ActualAccount[]): Promise<BudgetProvider[]> {
+        // Extract account IDs for database lookup
+        const budgetAccountIds = budgetAccounts.map(account => account.id);
+
+        // Load stored credentials for these accounts from database
+        console.log(`Loading stored credentials for ${budgetAccountIds.length} accounts...`);
+        let budgetProviders: BudgetProvider[] = [];
+
+        try {
+            budgetProviders = await loadAccounts(budget.groupId, budgetAccountIds);
+            console.log(`Found ${budgetProviders.length} accounts with stored credentials`);
+        } catch (error) {
+            console.warn(`Failed to load accounts from database for budget ${budget.name}:`, error);
+        }
+        return budgetProviders;
     }
 }

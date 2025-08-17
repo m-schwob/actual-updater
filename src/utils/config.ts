@@ -7,6 +7,7 @@ import { readFileSync } from 'fs';
 import * as yaml from 'js-yaml';
 import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
+import { ScrapingOptions } from './types';
 
 /**
  * OIDC configuration
@@ -41,6 +42,7 @@ export interface Config {
     actual: ActualConfig;
     cronJob: CronJobConfig;
     dataDirectory: string;
+    scrapingOptions: ScrapingOptions;
 }
 
 /**
@@ -55,6 +57,7 @@ interface RawYamlConfig {
     };
     cronJob: CronJobConfig;
     dataDirectory?: string; // Optional in YAML
+    scrapingOptions: ScrapingOptions;
 }
 
 /**
@@ -86,12 +89,13 @@ function buildFinalConfig(rawConfig: RawYamlConfig, adminToken: string, budgetFi
             adminToken: adminToken
         },
         cronJob: rawConfig.cronJob,
-        dataDirectory: rawConfig.dataDirectory!
+        dataDirectory: rawConfig.dataDirectory!,
+        scrapingOptions: rawConfig.scrapingOptions
     };
 }
 
 /**
- * Load and parse configuration from YAML file
+ * Load and parse the user provided configuration from YAML file
  */
 export function loadConfig(configPath: string = process.env.CONFIG_PATH || './config.yaml'): Config {
     try {
@@ -133,7 +137,8 @@ function validateRawConfig(rawConfig: RawYamlConfig): void {
         'oidc.clientSecret',
         'oidc.serverUrl',
         'actual.actualServerUrl',
-        'cronJob.schedule'
+        'cronJob.schedule',
+        'scrapeSince'
     ];
 
     // Check if all required fields are present

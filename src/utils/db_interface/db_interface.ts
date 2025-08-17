@@ -5,16 +5,7 @@
 
 import { spawn } from 'child_process';
 import { join } from 'path';
-
-/**
- * Account data structure returned from the database
- */
-export interface Account {
-    actual_account_id: string;
-    financial_provider: string;
-    financial_provider_account: string;
-    password?: string;
-}
+import { BudgetProvider } from '../types';
 
 /**
  * Error structure returned from CLI operations
@@ -31,7 +22,7 @@ export interface CLIError {
  * @param actualAccountIds - List of Actual account IDs to load
  * @returns Promise resolving to array of account objects with passwords
  */
-export async function loadAccounts(budgetId: string, actualAccountIds: string[]): Promise<Account[]> {
+export async function loadAccounts(budgetId: string, actualAccountIds: string[]): Promise<BudgetProvider[]> {
     return new Promise((resolve, reject) => {
         // Path to the CLI script relative to the service folder
         const scriptPath = join(__dirname, '..', 'utils', 'db_cli.py');
@@ -61,7 +52,7 @@ export async function loadAccounts(budgetId: string, actualAccountIds: string[])
         process.on('close', (code) => {
             if (code === 0) {
                 try {
-                    const accounts = JSON.parse(stdout) as Account[];
+                    const accounts = JSON.parse(stdout) as BudgetProvider[];
                     console.log(`Successfully loaded ${accounts.length} accounts`);
                     resolve(accounts);
                 } catch (parseError) {

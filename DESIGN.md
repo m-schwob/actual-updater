@@ -120,8 +120,6 @@ src/service/
 **Implementation Notes**:
 - **New Implementation**: Create from scratch in `src/service/` folder
 - **Admin Access**: Use admin OIDC token to access all user budgets
-- **Reference Pattern**: Follow `production-oidc-example.ts` for Actual API usage
-- **Legacy Files**: Don't edit old TypeScript files in `src/` root - they will be deleted
 
 ### Utils Component (`src/utils/`)
 
@@ -147,8 +145,7 @@ src/utils/
 **Implementation Notes**:
 - **credential_encryption.py**: Complete and valid implementation
 - **db_interface.py**: Basic implementation, needs SQL injection fixes
-- **actual_api.ts**: To be created to replace legacy `dataLayer.ts`
-- **Legacy**: `dataLayer.ts` is a poor first attempt and should be deleted
+- **actual-api.ts**:  Provide a clean, typed interface to `@actual-app/api`
 
 ## Data Flow
 

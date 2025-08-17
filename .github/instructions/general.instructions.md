@@ -59,10 +59,10 @@ This is the **Actual Updater** project - a comprehensive system for automaticall
 - **Form Validation**: Validate all user inputs before processing
 - **Database Operations**: Use the established `db_interface.py` patterns
 
-### Service Component (TypeScript)
-- **New Service Structure**: Create new files in `src/service/` folder, don't edit old TypeScript files
+## Service Component (TypeScript)
+- **Service Structure**: Create new files in `src/service/` folder.
 - **Bank Scraping**: Handle scraping failures with retry logic using israeli-bank-scrapers
-- **Actual API**: Follow patterns from `production-oidc-example.ts` for proper API usage
+- **Actual API**: `utils/actual_api.ts` should provide a clean, typed interface to `@actual-app/api`
 - **Data Transformation**: Validate and transform data between bank and Actual formats
 - **Admin Access**: Use admin account to access all user budgets
 
@@ -101,22 +101,16 @@ src/
 │   ├── main.py         # FastAPI + NiceGUI entry point
 │   ├── ui.py           # UI components and logic
 │   └── oidc.py         # OIDC authentication
-├── service/            # NEW: TypeScript service (to be created)
+├── service/            # TypeScript service
 ├── utils/              # Shared utilities (Python + TypeScript)
 │   ├── credential_encryption.py  # Password encryption (complete)
 │   ├── db_interface.py           # SQLite operations (needs SQL injection fix)
 │   └── constants.py              # Shared constants
-├── configManager/      # OLD: Will be deprecated, don't edit
-└── *.ts                # OLD: Legacy files, don't edit except production-oidc-example.ts
 tests/                  # Test files (mirror src structure)
 data/                   # Database and runtime data
 ```
 
-## Legacy Code Guidance
-- **Don't Edit**: Old TypeScript files (configManager/, app-globals.ts, commonTypes.ts, importer.ts, index.ts, scraper.ts, updateAccount.ts)
-- **Reference Only**: Use old files for context and understanding
-- **Delete Later**: Old files will be removed when new service is complete
-- **Exception**: production-oidc-example.ts is a reference example, can be used as guide
+
 
 ## When Making Changes
 1. **Read Context**: Always check DESIGN.md for architectural context

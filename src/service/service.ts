@@ -5,7 +5,7 @@
 
 import { ActualApiClient } from '../utils/actual-api';
 import { ActualConfig } from '../utils/config';
-import { Budget, BudgetProvider, ScrapingOptions } from '../utils/types';
+import { ActualAccount, Budget, BudgetProvider, ScrapingOptions } from '../utils/types';
 import { loadAccounts } from '../utils/db_interface/db_interface';
 import { scrapeBudgetProviders } from './scraper';
 import { importScrapedTransactions } from './importer';
@@ -64,11 +64,11 @@ export class ActualUpdaterService {
         console.log('Starting import workflow...');
 
         try {
-            // Step 1: Get all available budgets
+            // Get all available budgets
             const budgets = await this.apiClient.getRemoteBudgets();
             console.log(`Found ${budgets.length} budgets to process`);
 
-            // Step 2: Process each budget via helper
+            // Process each budget via helper
             await this.processEachBudget(budgets);
 
             console.log('\nImport workflow completed successfully');
@@ -120,24 +120,13 @@ export class ActualUpdaterService {
                 return;
             }
 
-            // Extract account IDs for database lookup
-            const budgetAccountIds = budgetAccounts.map(account => account.id);
-
-            // Load stored credentials for these accounts from database
-            console.log(`Loading stored credentials for ${budgetAccountIds.length} accounts...`);
-            let budgetProviders: BudgetProvider[] = [];
-
-            try {
-                budgetProviders = await loadAccounts(budget.groupId, budgetAccountIds);
-                console.log(`Found ${budgetProviders.length} accounts with stored credentials`);
-            } catch (error) {
-                console.warn(`Failed to load accounts from database for budget ${budget.name}:`, error);
-            }
+            // Load budget providers from the database
+            const budgetProviders = await this.loadBudgetProviders(budget, budgetAccounts);
 
             // Scrape providers data for the listed accounts
             console.log(`Scraping providers transactions...`);
             const linkedScrappedAccounts = await scrapeBudgetProviders(budgetProviders, this.scrapingOptions);
-        
+
             // Import scraped transactions into Actual for this budget
             console.log(`Importing scraped transactions...`);
             await importScrapedTransactions(this.apiClient, linkedScrappedAccounts);
@@ -151,5 +140,25 @@ export class ActualUpdaterService {
             console.error(`Failed to process budget ${budget.name}:`, error);
             // Continue with other budgets even if one fails
         }
+    }
+
+    /**
+     * Load all providers from the database
+     */
+    private async loadBudgetProviders(budget: Budget, budgetAccounts: ActualAccount[]): Promise<BudgetProvider[]> {
+        // Extract account IDs for database lookup
+        const budgetAccountIds = budgetAccounts.map(account => account.id);
+
+        // Load stored credentials for these accounts from database
+        console.log(`Loading stored credentials for ${budgetAccountIds.length} accounts...`);
+        let budgetProviders: BudgetProvider[] = [];
+
+        try {
+            budgetProviders = await loadAccounts(budget.groupId, budgetAccountIds);
+            console.log(`Found ${budgetProviders.length} accounts with stored credentials`);
+        } catch (error) {
+            console.warn(`Failed to load accounts from database for budget ${budget.name}:`, error);
+        }
+        return budgetProviders;
     }
 }

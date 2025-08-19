@@ -166,7 +166,7 @@ def update_providers_table(encrypted_password, budget_id, financial_provider, fi
             INSERT OR REPLACE INTO {PROVIDERS_TABLE}
             ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}, {FINANCIAL_PROVIDER_PASSWORD}, {ACCOUNTS})
             VALUES 
-            ({budget_id}, {financial_provider}, {financial_provider_username}, {encrypted_password}, {financial_provider_accounts})
+            ('{budget_id}', '{financial_provider}', '{financial_provider_username}', '{encrypted_password}', '{",".join(financial_provider_accounts)}')
             '''
         )
 

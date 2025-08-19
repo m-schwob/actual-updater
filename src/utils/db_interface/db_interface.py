@@ -60,25 +60,12 @@ def initialize_db(db_path: PathLike = DB_PATH) -> None:
     """Initialize the SQLite database schema according to the design specification."""
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
+        create_providers_table(cursor)
+        create_accounts_table(cursor)
+        conn.commit()
 
-        cursor.execute(
-            f'''
-            CREATE TABLE IF NOT EXISTS {ACCOUNTS_TABLE} (
-                {ACTUAL_ACCOUNT_ID} PRIMARY KEY TEXT NOT NULL,
-                {FINANCIAL_PROVIDER_ACCOUNT} TEXT NOT NULL,
-                {REMOVED} BOOLEAN NOT NULL DEFAULT FALSE,
-                {BUDGET_ID} TEXT NOT NULL,
-                {FINANCIAL_PROVIDER} TEXT NOT NULL,
-                {FINANCIAL_PROVIDER_USERNAME} TEXT NOT NULL,
-                FOREIGN KEY ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}) 
-                    REFERENCES {PROVIDERS_TABLE}({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME})
-                    ON DELETE CASCADE
-            )
-            '''
-        )
-
-        # Create providers table according to design schema
-        cursor.execute(
+def create_providers_table(cursor):
+    cursor.execute(
             f'''
             CREATE TABLE IF NOT EXISTS {PROVIDERS_TABLE} (
                 {BUDGET_ID} TEXT NOT NULL,
@@ -91,7 +78,22 @@ def initialize_db(db_path: PathLike = DB_PATH) -> None:
             '''
         )
 
-        conn.commit()
+def create_accounts_table(cursor):
+    cursor.execute(
+            f'''
+            CREATE TABLE IF NOT EXISTS {ACCOUNTS_TABLE} (
+                {ACTUAL_ACCOUNT_ID} TEXT NOT NULL,
+                {FINANCIAL_PROVIDER_ACCOUNT} TEXT NOT NULL,
+                {REMOVED} BOOLEAN NOT NULL DEFAULT FALSE,
+                {BUDGET_ID} TEXT NOT NULL,
+                {FINANCIAL_PROVIDER} TEXT NOT NULL,
+                {FINANCIAL_PROVIDER_USERNAME} TEXT NOT NULL,
+                FOREIGN KEY ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}) 
+                    REFERENCES {PROVIDERS_TABLE}({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME})
+                    ON DELETE CASCADE
+            )
+            '''
+        )
 
 
 def get_account_mappings(db_path, budget_id, financial_provider, financial_provider_username, accounts):
@@ -111,7 +113,7 @@ def get_account_mappings(db_path, budget_id, financial_provider, financial_provi
 
 
 def store_provider_accounts(
-    provider: Provider,
+    provider: BudgetProvider,
     db_path: PathLike = DB_PATH,
 ) -> None:
     """Store a single account for a specific budget with encrypted password.

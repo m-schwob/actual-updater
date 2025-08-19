@@ -15,7 +15,7 @@ from src.utils.constants import (
     ACCOUNTS_TABLE,
     PROVIDERS_TABLE,
 )
-from utils.db_interface.types import Provider
+from src.utils.db_interface.types import BudgetProvider
 
 
 def _process_account_rows(cursor: sqlite3.Cursor, budget_id: Optional[str] = None) -> List[Dict[str, str]]:

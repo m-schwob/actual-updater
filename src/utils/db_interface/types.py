@@ -2,6 +2,13 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class AccountsLink:
+    """Represents a mapping between actual account IDs and financial provider account IDs."""
+    actual_account_id: str
+    financial_provider_account_id: str
+
+
+@dataclass(frozen=True)
 class BudgetProvider:
     """Represents a row in the providers table.
 

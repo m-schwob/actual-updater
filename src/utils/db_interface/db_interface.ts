@@ -1,19 +1,50 @@
 /**
- * TypeScript interface for database operations via Python CLI
+ * TypeScript interface for database operations via Python 
  * Provides access to the Python db_interface functionality from TypeScript
  */
 
-import { spawn } from 'child_process';
-import { join } from 'path';
+import { execFile } from "child_process";
 import { BudgetProvider } from '../types';
 
+
 /**
- * Error structure returned from CLI operations
+ * General helper function to run a Python function with arguments
+ * @param module - The Python module to import
+ * @param func - The function to call
+ * @param args - Arguments to pass to the function (Json serializable)
+ * @param timeout - (Optional) Timeout in milliseconds for the Python process (default: 30000 ms)
+ * @param maxBuffer - (Optional) Maximum buffer size for stdout/stderr in bytes (default: 10 MB)
+ * @returns Promise resolving to the function's return value as a string
+ * @throws Error if the Python function fails or returns an error
  */
-export interface CLIError {
-    error: string;
-    type: string;
+function runPythonFunc(
+    module: string,
+    func: string,
+    args: any,
+    timeout: number = 30000,
+    maxBuffer: number = 10 * 1024 * 1024
+): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const code = [
+            'import json, sys',
+            `from ${module} import ${func}`,
+            `print(json.dumps(${func}(**json.loads(sys.argv[1]))))`
+        ].join('\n');
+
+        execFile("python3", ["-c", code, JSON.stringify(args)], { timeout, maxBuffer }, (err, stdout, stderr) => {
+            if (err) {
+                const errMsg = stdout ? stdout.trim() + '\n' : '' + stderr ? stderr.trim() : String(err).trim();
+                return reject(new Error(errMsg));
+            }
+            try {
+                resolve(JSON.parse(stdout.trim()));
+            } catch (parseError) {
+                reject(new Error(`Failed to parse Python output as JSON: ${stdout.trim()}\nError: ${parseError}`));
+            }
+        });
+    });
 }
+
 
 /**
  * Load accounts from the database with decrypted passwords
@@ -23,60 +54,9 @@ export interface CLIError {
  * @returns Promise resolving to array of account objects with passwords
  */
 export async function loadAccounts(budgetId: string, actualAccountIds: string[]): Promise<BudgetProvider[]> {
-    return new Promise((resolve, reject) => {
-        // Path to the CLI script relative to the service folder
-        const scriptPath = join(__dirname, '..', 'utils', 'db_cli.py');
-
-        const args = [
-            scriptPath,
-            'load_accounts',
-            '--budget-id', budgetId,
-            '--actual-account-ids', ...actualAccountIds
-        ];
-
-        console.log(`Loading accounts for budget: ${budgetId}, accounts: ${actualAccountIds.join(', ')}`);
-
-        const process = spawn('python3', args);
-
-        let stdout = '';
-        let stderr = '';
-
-        process.stdout.on('data', (data) => {
-            stdout += data.toString();
-        });
-
-        process.stderr.on('data', (data) => {
-            stderr += data.toString();
-        });
-
-        process.on('close', (code) => {
-            if (code === 0) {
-                try {
-                    const accounts = JSON.parse(stdout) as BudgetProvider[];
-                    console.log(`Successfully loaded ${accounts.length} accounts`);
-                    resolve(accounts);
-                } catch (parseError) {
-                    const error = new Error(`Failed to parse JSON response: ${parseError}`);
-                    console.error('JSON parse error:', error.message);
-                    reject(error);
-                }
-            } else {
-                try {
-                    const errorData = JSON.parse(stderr) as CLIError;
-                    const error = new Error(`${errorData.type}: ${errorData.error}`);
-                    console.error('CLI error:', error.message);
-                    reject(error);
-                } catch (parseError) {
-                    const error = new Error(`CLI failed with code ${code}: ${stderr || 'Unknown error'}`);
-                    console.error('CLI execution error:', error.message);
-                    reject(error);
-                }
-            }
-        });
-
-        process.on('error', (error) => {
-            console.error('Process spawn error:', error.message);
-            reject(new Error(`Failed to spawn Python process: ${error.message}`));
-        });
-    });
+    return await runPythonFunc(
+        "src.utils.db_interface.db_interface",
+        "load_accounts",
+        { "budget_id": budgetId, "actual_account_ids": actualAccountIds }
+    ) as BudgetProvider[];
 }

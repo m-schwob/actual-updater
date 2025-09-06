@@ -131,6 +131,23 @@
                 "src.app.main:app",
                 "--reload"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Scraper Manual Test",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": [
+                "test:scraper-manual"
+            ],
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "env": {
+                "NODE_ENV": "development"
+            }
         }
     ],
     "inputs": [

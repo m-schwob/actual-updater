@@ -1,7 +1,8 @@
 import { jest } from '@jest/globals';
-import { ScraperCredentials } from 'israeli-bank-scrapers';
+import { CompanyTypes, ScraperCredentials, SCRAPERS } from 'israeli-bank-scrapers';
 import { TransactionsAccount, Transaction, TransactionTypes, TransactionStatuses } from 'israeli-bank-scrapers/lib/transactions';
 import { ScraperScrapingResult } from 'israeli-bank-scrapers/lib/scrapers/interface';
+import { scrapeBudgetProviders } from '../../src/service/scraper';
 
 // Mock data for testing
 const mockTransaction: Transaction = {
@@ -46,18 +47,7 @@ const mockEmptyAccountsScrapeResult: ScraperScrapingResult = {
 const mockScrapeFunction = jest.fn<(credentials: ScraperCredentials) => Promise<ScraperScrapingResult>>();
 
 describe("Integration Tests", () => {
-    // Tests that take real credentials manually
-    test("Visa Cal", async () => {
-        // TODO: Implement 
-    });
-
-    test("Beinleumi", async () => {
-        // TODO: Implement
-    });
-
-    test("Max", async () => {
-        // TODO: Implement
-    });
+    // test multiple scrapers with mocking
 });
 
 describe("Unit Tests", () => {

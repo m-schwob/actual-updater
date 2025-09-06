@@ -57,11 +57,12 @@ export async function scrapeBudgetProviders(budgetProviders: BudgetProvider[], c
                 companyId: CompanyTypes[bankName],
                 // TODO we need to make sure it is not before the minimum allowed time difference for the specific scraper
                 startDate: config.scrapeSince,
+                showBrowser: false,
             };
 
             const credentials: ScraperCredentials = {
                 username: provider.financialProviderUsername,
-                password: provider.financialProviderUsername || '',
+                password: provider.financialProviderPassword || '',
             };
 
             console.log(`Scraping accounts for ${provider.financialProvider} (${provider.financialProviderUsername})`);

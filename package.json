@@ -15,6 +15,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:scraper-manual": "tsx tests/service/scraper-manual-test.ts",
     "lint": "eslint . --max-warnings 0",
     "build": "tsc",
     "build:dev": "tsc --project tsconfig.dev.json",
@@ -24,7 +25,7 @@
   "dependencies": {
     "@actual-app/api": "^25.7.1",
     "better-sqlite3": "^12.2.0",
-    "israeli-bank-scrapers": "^6.2.1",
+    "israeli-bank-scrapers": "^6.2.2",
     "js-yaml": "^4.1.0",
     "keytar": "^7.9.0",
     "typescript": "^5.5.4"
@@ -38,6 +39,7 @@
     "@typescript-eslint/parser": "^8.15.0",
     "eslint": "^9.15.0",
     "jest": "^29.7.0",
+    "prompt-sync": "^4.2.0",
     "ts-jest": "^29.3.4",
     "tsx": "^4.7.1",
     "typescript-eslint": "^8.15.0"

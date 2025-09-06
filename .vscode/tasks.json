@@ -4,35 +4,35 @@
         {
             "label": "Show Supervisor Status",
             "type": "shell",
-            "command": "supervisorctl status",
+            "command": "supervisorctl -c .devcontainer/supervisord.conf status",
             "group": "none",
             "problemMatcher": []
         },
         {
             "label": "Restart Authelia Service",
             "type": "shell",
-            "command": "supervisorctl restart authelia",
+            "command": "supervisorctl -c .devcontainer/supervisord.conf restart authelia",
             "group": "none",
             "problemMatcher": []
         },
         {
             "label": "Restart Actual-Server Service",
             "type": "shell",
-            "command": "supervisorctl restart actual-server",
+            "command": "supervisorctl -c .devcontainer/supervisord.conf restart actual-server",
             "group": "none",
             "problemMatcher": []
         },
         {
             "label": "Stop Authelia Service",
             "type": "shell",
-            "command": "supervisorctl stop authelia",
+            "command": "supervisorctl -c .devcontainer/supervisord.conf stop authelia",
             "group": "none",
             "problemMatcher": []
         },
         {
             "label": "Stop Actual-Server Service",
             "type": "shell",
-            "command": "supervisorctl stop actual-server",
+            "command": "supervisorctl -c .devcontainer/supervisord.conf stop actual-server",
             "group": "none",
             "problemMatcher": []
         },

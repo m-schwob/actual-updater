@@ -11,19 +11,27 @@
     "containerEnv": {
         "TZ": "Asia/Jerusalem"
     },
-    // run before the container building, ensure the data directory exists
-    "initializeCommand": "if not exist .\\data\\actual-server mkdir .\\data\\actual-server",
+    // use non root user, so chromium won't run as root which required using --no-sandbox flag and less secure
+    "remoteUser": "dev",
+    "runArgs": [
+        // fo running chromium in an contained environment
+        "--init",
+        "--ipc=host"
+    ],
     "mounts": [
         // bind preinstalled node_modules to avoid reinstalling them
         "source=actual-updater-node_modules,target=/workspaces/actual-updater/node_modules,type=volume"
     ],
-    "postCreateCommand": "yarn install && pip install --upgrade pip && pip install -e .[dev] && pip install -e .",
-    "postAttachCommand": "supervisorctl status",
     "overrideCommand": false,
+    // run before the container building, ensure the data directory exists
+    "initializeCommand": "if not exist .\\data\\actual-server mkdir .\\data\\actual-server",
+    "postCreateCommand": "sudo chown -R dev:dev /workspaces/actual-updater && yarn install && pip install --upgrade pip && pip install -e .[dev] && pip install -e .",
+    "postAttachCommand": "supervisorctl -c .devcontainer/supervisord.conf status",
     "customizations": {
         "vscode": {
             "settings": {
-                "python.defaultInterpreterPath": "/opt/venv/bin/python"
+                "python.defaultInterpreterPath": "/opt/venv/bin/python",
+                "terminal.integrated.defaultProfile.linux": "bash"
             },
             "extensions": [
                 "ms-python.black-formatter",

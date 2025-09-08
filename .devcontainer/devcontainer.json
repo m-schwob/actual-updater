@@ -1,9 +1,12 @@
 {
     "name": "actual-updater-dev",
-    "build": {
-        "dockerfile": "Dockerfile",
-        "context": ".."
-    },
+    "dockerComposeFile": "docker-compose.yaml",
+    "workspaceFolder": "/workspaces/actual-updater",
+    "service": "dev",
+    "runServices": [
+        "chromium",
+        "dev" 
+    ],
     "forwardPorts": [
         5006,
         9091
@@ -11,14 +14,13 @@
     "containerEnv": {
         "TZ": "Asia/Jerusalem"
     },
-    // run before the container building, ensure the data directory exists
-    "initializeCommand": "if not exist .\\data\\actual-server mkdir .\\data\\actual-server",
     "mounts": [
         // bind preinstalled node_modules to avoid reinstalling them
         "source=actual-updater-node_modules,target=/workspaces/actual-updater/node_modules,type=volume"
     ],
     "postCreateCommand": "yarn install && pip install --upgrade pip && pip install -e .[dev] && pip install -e .",
     "postAttachCommand": "supervisorctl status",
+    "shutdownAction": "stopCompose",
     "overrideCommand": false,
     "customizations": {
         "vscode": {

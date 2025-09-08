@@ -1,50 +1,22 @@
 import { jest } from '@jest/globals';
+
+// Mock only the scrape function (shared per-test control via mockResolvedValueOnce)
+const mockScrapeFunction = jest.fn() as jest.MockedFunction<(credentials: ScraperCredentials) => Promise<ScraperScrapingResult>>;
+
+// Install module-scope mock so createScraper() created by the module returns our mock
+jest.mock('israeli-bank-scrapers', () => {
+    const actual = jest.requireActual('israeli-bank-scrapers');
+    return Object.assign({}, actual, {
+        createScraper: () => ({ scrape: mockScrapeFunction })
+    });
+});
+
 import { CompanyTypes, ScraperCredentials, SCRAPERS } from 'israeli-bank-scrapers';
-import { TransactionsAccount, Transaction, TransactionTypes, TransactionStatuses } from 'israeli-bank-scrapers/lib/transactions';
 import { ScraperScrapingResult } from 'israeli-bank-scrapers/lib/scrapers/interface';
+import { BudgetProvider } from '../../src/utils/types';
 import { scrapeBudgetProviders } from '../../src/service/scraper';
 
-// Mock data for testing
-const mockTransaction: Transaction = {
-    type: TransactionTypes.Normal,
-    identifier: '12345',
-    date: '2023-08-01T00:00:00.000Z',
-    processedDate: '2023-08-02T00:00:00.000Z',
-    originalAmount: 100.50,
-    originalCurrency: 'ILS',
-    chargedAmount: 100.50,
-    chargedCurrency: 'ILS',
-    description: 'Test Transaction',
-    memo: 'Test memo',
-    status: TransactionStatuses.Completed,
-    category: 'Food'
-};
 
-const mockTransactionsAccount: TransactionsAccount = {
-    accountNumber: '12345678',
-    balance: 1500.75,
-    txns: [mockTransaction]
-};
-
-const mockSuccessfulScrapeResult: ScraperScrapingResult = {
-    success: true,
-    accounts: [mockTransactionsAccount],
-    futureDebits: []
-};
-
-const mockFailedScrapeResult: ScraperScrapingResult = {
-    success: false,
-    errorType: 'INVALID_PASSWORD' as any,
-    errorMessage: 'Invalid credentials provided'
-};
-
-const mockEmptyAccountsScrapeResult: ScraperScrapingResult = {
-    success: true,
-    accounts: undefined
-};
-
-// Mock only the scrape function
-const mockScrapeFunction = jest.fn<(credentials: ScraperCredentials) => Promise<ScraperScrapingResult>>();
 
 describe("Integration Tests", () => {
     // test multiple scrapers with mocking
@@ -53,7 +25,7 @@ describe("Integration Tests", () => {
 describe("Unit Tests", () => {
     // Unit tests using mocked scrape function
     describe("Visa Cal", () => {
-        test("sunny day", async () => {
+        test("sunny day - build budgetProviders object", async () => {
             // TODO: Implement
         });
     });
@@ -66,7 +38,43 @@ describe("Unit Tests", () => {
 
     describe("Max", () => {
         test("sunny day", async () => {
-            // TODO: Implement
+            const providerName = CompanyTypes.visaCal;
+            const credentials = { username: 'testuser', password: 'testpass' };
+            const options = { scrapeSince: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } as any;
+
+            const budgetProviders: BudgetProvider[] = [
+                {
+                    budgetId: 'manual-test-budget',
+                    financialProvider: providerName,
+                    accountsMapping: [
+                        {
+                            actualAccountId: `${providerName}-manual-test-account`,
+                            financialProviderAccountId: '12345678'
+                        }
+                    ],
+                    financialProviderUsername: credentials.username,
+                    financialProviderPassword: credentials.password
+                }
+            ];
+
+            // set a single-call return for this test
+            const scrapeResult = {
+                success: true,
+                accounts: [
+                    { accountNumber: '12345678', txns: [{ date: '2025-09-01', amount: -100, description: 'Test' }] }
+                ]
+            } as unknown as ScraperScrapingResult;
+
+            mockScrapeFunction.mockResolvedValueOnce(scrapeResult);
+
+            // call function under test
+            const linked = await scrapeBudgetProviders(budgetProviders, { scrapeSince: new Date() });
+
+            // optional: set default for remaining calls
+            // mockScrapeFunction.mockResolvedValue({ success: true, accounts: [] } as any);
+
+            // cleanup between tests
+            mockScrapeFunction.mockClear();
         });
     });
 });

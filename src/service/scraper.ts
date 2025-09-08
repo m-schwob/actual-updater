@@ -18,10 +18,10 @@ async function scrapeFinancialProvider(options: ScraperOptions, credentials: Scr
 
     let scrapeResult: ScraperScrapingResult;
     try {
+        const browserContext = await browser.createBrowserContext();
         options = {
             ...options,
-            browser: browser,
-            skipCloseBrowser: true
+            browserContext // scraper will do context close but not browser close
         };
         const scraper = createScraper(options);
         console.log("Starting scrape...");

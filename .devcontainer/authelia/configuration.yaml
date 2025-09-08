@@ -105,5 +105,5 @@ authentication_backend:
 
 log:
   level: debug
-  file_path: '/var/log/authelia/authelia.log'
+  file_path: '/workspaces/actual-updater/.devcontainer/authelia/authelia.log'
   keep_stdout: true

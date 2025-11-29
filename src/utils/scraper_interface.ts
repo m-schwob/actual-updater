@@ -16,6 +16,11 @@ import {
 import { TransactionsAccount } from 'israeli-bank-scrapers/lib/transactions';
 
 /**
+ * Default number of days to look back when scraping accounts
+ */
+const DEFAULT_SCRAPE_LOOKBACK_DAYS = 30;
+
+/**
  * Information about a supported financial provider
  */
 export interface ProviderInfo {
@@ -83,7 +88,9 @@ async function resolveChromiumUrlToIp(chromiumUrl: string): Promise<string> {
         const hostname = chromiumUrlObject.hostname;
 
         // if it's already an IP (v4/v6) or localhost, nothing to do
-        const isIpv4 = /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname);
+        // IPv4 regex with proper octet validation (0-255)
+        const ipv4Pattern = /^(?:(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)$/;
+        const isIpv4 = ipv4Pattern.test(hostname);
         const isIpv6 = /^\[[0-9a-fA-F:]+\]$/.test(hostname) || /:[0-9a-fA-F:]+/.test(hostname);
         if (isIpv4 || isIpv6 || hostname === 'localhost') {
             return chromiumUrl;
@@ -129,7 +136,7 @@ export async function scrapeProviderAccounts(credentials: ProviderCredentials): 
             const browserContext = await browser.createBrowserContext();
             const options: ScraperOptions = {
                 companyId: CompanyTypes[providerKey],
-                startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+                startDate: new Date(Date.now() - DEFAULT_SCRAPE_LOOKBACK_DAYS * 24 * 60 * 60 * 1000),
                 showBrowser: false,
                 browserContext
             };

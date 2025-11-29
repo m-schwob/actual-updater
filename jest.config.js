@@ -19,12 +19,5 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'js', 'json'],
   extensionsToTreatAsEsm: [],
-  testTimeout: 30000,
-  // Ensure source maps are generated for debugging
-  globals: {
-    'ts-jest': {
-      tsconfig: 'tsconfig.dev.json',
-      isolatedModules: true
-    }
-  }
+  testTimeout: 30000
 };

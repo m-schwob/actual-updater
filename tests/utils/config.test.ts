@@ -52,6 +52,6 @@ describe('Integration Tests', () => {
 describe('Unit Tests', () => {
   test('should throw error for invalid config file', () => {
     process.env.CONFIG_PATH = 'tests/sources/utils/missingScheduleConfig.yaml';
-    expect(() => loadConfig()).toThrowError(`Required configuration field missing: cronJob.schedule`);
+    expect(() => loadConfig()).toThrow(`Required configuration field missing: cronJob.schedule`);
   });
 });

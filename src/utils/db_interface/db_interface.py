@@ -1,6 +1,7 @@
 from os import PathLike
 import sqlite3
 from typing import List, Dict, Optional
+import json
 from src.utils.db_interface.credential_encryption import encrypt_password, decrypt_password
 from src.utils.constants import (
     DB_PATH,
@@ -99,17 +100,19 @@ def create_accounts_table(cursor):
 def get_account_mappings(db_path, budget_id, financial_provider, financial_provider_username, accounts):
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
+        placeholders = ','.join('?' * len(accounts))
         cursor.execute(
             f'''
-            select {ACTUAL_ACCOUNT_ID}, {FINANCIAL_PROVIDER_ACCOUNT}
-            from {ACCOUNTS_TABLE}
-            where {BUDGET_ID} = {budget_id} 
-            and {FINANCIAL_PROVIDER} = {financial_provider} 
-            and {FINANCIAL_PROVIDER_USERNAME} = {financial_provider_username}
-            and {FINANCIAL_PROVIDER_ACCOUNT} IN ({accounts})
-            '''
+            SELECT {ACTUAL_ACCOUNT_ID}, {FINANCIAL_PROVIDER_ACCOUNT}
+            FROM {ACCOUNTS_TABLE}
+            WHERE {BUDGET_ID} = ? 
+            AND {FINANCIAL_PROVIDER} = ? 
+            AND {FINANCIAL_PROVIDER_USERNAME} = ?
+            AND {FINANCIAL_PROVIDER_ACCOUNT} IN ({placeholders})
+            ''',
+            (budget_id, financial_provider, financial_provider_username, *accounts)
         )
-    return cursor.fetchall()
+        return cursor.fetchall()
 
 
 def store_provider_accounts(
@@ -140,35 +143,33 @@ def store_provider_accounts(
 
 def update_account_row(budget_id, financial_provider, financial_provider_username, cursor, actual_account_id, financial_provider_account):
     cursor.execute(
-                f'''
-                INSERT OR REPLACE INTO {ACCOUNTS_TABLE}
-                ({ACTUAL_ACCOUNT_ID}, {FINANCIAL_PROVIDER_ACCOUNT}, {BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}, {REMOVED})
-                VALUES 
-                ({actual_account_id}, {financial_provider_account}, {budget_id}, {financial_provider}, {financial_provider_username}, FALSE)
-                '''
-            )
+        f'''
+        INSERT OR REPLACE INTO {ACCOUNTS_TABLE}
+        ({ACTUAL_ACCOUNT_ID}, {FINANCIAL_PROVIDER_ACCOUNT}, {BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}, {REMOVED})
+        VALUES (?, ?, ?, ?, ?, FALSE)
+        ''',
+        (actual_account_id, financial_provider_account, budget_id, financial_provider, financial_provider_username)
+    )
 
 def set_provider_accounts_to_removed(budget_id, financial_provider, financial_provider_username, cursor):
     cursor.execute(
-            f'''
-                UPDATE TABLE {ACCOUNTS_TABLE}
-                SET {REMOVED} = TRUE
-                WHERE 
-                {BUDGET_ID} = {budget_id} AND
-                {FINANCIAL_PROVIDER} = {financial_provider} AND
-                {FINANCIAL_PROVIDER_USERNAME} = {financial_provider_username}
-            '''
-        )
+        f'''
+        UPDATE {ACCOUNTS_TABLE}
+        SET {REMOVED} = TRUE
+        WHERE {BUDGET_ID} = ? AND {FINANCIAL_PROVIDER} = ? AND {FINANCIAL_PROVIDER_USERNAME} = ?
+        ''',
+        (budget_id, financial_provider, financial_provider_username)
+    )
 
 def update_providers_table(encrypted_password, budget_id, financial_provider, financial_provider_username, financial_provider_accounts, cursor):
     cursor.execute(
-            f'''
-            INSERT OR REPLACE INTO {PROVIDERS_TABLE}
-            ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}, {FINANCIAL_PROVIDER_PASSWORD}, {ACCOUNTS})
-            VALUES 
-            ('{budget_id}', '{financial_provider}', '{financial_provider_username}', '{encrypted_password}', '{",".join(financial_provider_accounts)}')
-            '''
-        )
+        f'''
+        INSERT OR REPLACE INTO {PROVIDERS_TABLE}
+        ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}, {FINANCIAL_PROVIDER_PASSWORD}, {ACCOUNTS})
+        VALUES (?, ?, ?, ?, ?)
+        ''',
+        (budget_id, financial_provider, financial_provider_username, encrypted_password, json.dumps(financial_provider_accounts))
+    )
 
 
 def load_accounts(
@@ -194,7 +195,7 @@ def load_accounts(
         if return_passwords:
             fields_to_select.append(FINANCIAL_PROVIDER_PASSWORD)
 
-        where_clause = f"WHERE {BUDGET_ID}={budget_id} AND {REMOVED} = FALSE"
+        where_clause = f"WHERE {BUDGET_ID}='{budget_id}' AND {REMOVED} = FALSE"
         if actual_account_ids:
             # Filter by specific actual account IDs using simple IN clause
             where_clause += f"AND {ACTUAL_ACCOUNT_ID} IN ({actual_account_ids})"
@@ -217,8 +218,9 @@ def remove_account(budget_id: str, actual_account_id: str, db_path: PathLike = D
             f'''
             UPDATE {ACCOUNTS_TABLE} 
             SET {REMOVED} = TRUE
-            WHERE {BUDGET_ID} = {budget_id} AND {ACTUAL_ACCOUNT_ID} = {actual_account_id}
-            '''
+            WHERE {BUDGET_ID} = ? AND {ACTUAL_ACCOUNT_ID} = ?
+            ''',
+            (budget_id, actual_account_id)
         )
 
         return cursor.rowcount > 0
@@ -231,8 +233,9 @@ def delete_account(budget_id: str, actual_account_id: str, db_path: PathLike = D
         cursor.execute(
             f'''
             DELETE FROM {ACCOUNTS_TABLE} 
-            WHERE {BUDGET_ID} = {budget_id} AND {ACTUAL_ACCOUNT_ID} = {actual_account_id}
-            '''
+            WHERE {BUDGET_ID} = ? AND {ACTUAL_ACCOUNT_ID} = ?
+            ''',
+            (budget_id, actual_account_id)
         )
 
         return cursor.rowcount > 0

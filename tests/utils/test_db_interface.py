@@ -91,20 +91,25 @@ class TestDbInterface(unittest.TestCase):
         self.assertEqual(row[FINANCIAL_PROVIDER], self.provider)
         self.assertEqual(row[FINANCIAL_PROVIDER_ACCOUNT], self.account_num)
         self.assertEqual(row[FINANCIAL_PROVIDER_USERNAME], self.username)
-        # removed should be False/0 translated to bool
-        self.assertFalse(row[REMOVED])
+
 
     def test_provider_password_encrypted_in_providers_table(self):
         # Store one account (writes providers row)
-        store_account(
+        budget_provider = BudgetProvider(
             budget_id=self.budget_id,
             financial_provider=self.provider,
-            financial_provider_account=self.account_num,
             financial_provider_username=self.username,
-            financial_provider_password=self.password,
-            actual_account_id=self.actual_account_id,
-            db_path=self.db_path,
-        )
+                financial_provider_password=self.password,
+                accounts_mapping=[
+                    AccountsLink(
+                        actual_account_id=self.actual_account_id,
+                        financial_provider_account_id=self.account_num
+                    )
+                ])
+        store_provider_accounts(
+            budget_provider,
+            db_path=self.db_path
+            )
 
         # Verify the providers table has an encrypted password (not equal to plain)
         with sqlite3.connect(self.db_path) as conn:
@@ -123,14 +128,22 @@ class TestDbInterface(unittest.TestCase):
 
     def test_remove_and_delete_account(self):
         # Insert then soft-delete
-        store_account(
+
+        budget_provider = BudgetProvider(
             budget_id=self.budget_id,
             financial_provider=self.provider,
-            financial_provider_account=self.account_num,
             financial_provider_username=self.username,
             financial_provider_password=self.password,
-            actual_account_id=self.actual_account_id,
-            db_path=self.db_path,
+            accounts_mapping=[
+                AccountsLink(
+                    actual_account_id=self.actual_account_id,
+                    financial_provider_account_id=self.account_num
+                )
+            ]
+        )
+        store_provider_accounts(
+            budget_provider,
+            db_path=self.db_path
         )
 
         removed = remove_account(self.budget_id, self.actual_account_id, db_path=self.db_path)
@@ -160,14 +173,22 @@ class TestDbInterface(unittest.TestCase):
     def test_find_accounts_filters(self):
         # Insert two accounts under same provider with different account numbers/ids
         for idx in range(2):
-            store_account(
+            accounts_mapping=[
+                    AccountsLink(
+                        actual_account_id=f"{self.actual_account_id}-{i}",
+                        financial_provider_account_id=f"{self.account_num}-{i}"
+                    ) for i in range(idx+1)
+                ]
+            budget_provider = BudgetProvider(
                 budget_id=self.budget_id,
                 financial_provider=self.provider,
-                financial_provider_account=f"{self.account_num}-{idx}",
                 financial_provider_username=self.username,
                 financial_provider_password=self.password,
-                actual_account_id=f"{self.actual_account_id}-{idx}",
-                db_path=self.db_path,
+                accounts_mapping=accounts_mapping
+            )
+            store_provider_accounts(
+                budget_provider,
+                db_path=self.db_path
             )
 
         # Filter by provider

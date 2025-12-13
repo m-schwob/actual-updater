@@ -2,7 +2,6 @@ import os
 import sqlite3
 import tempfile
 import unittest
-from types import SimpleNamespace
 from unittest.mock import patch
 
 from src.utils.db_interface.db_interface import (

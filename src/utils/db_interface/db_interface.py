@@ -125,9 +125,9 @@ def store_provider_accounts(
     provider: BudgetProvider,
     db_path: PathLike = DB_PATH,
 ) -> None:
-    """Store a single account for a specific budget with encrypted password.
+    """Store a provider and all its associated account mappings for a specific budget, with encrypted password.
 
-    This will create a new account or replace the old one if it already exists (upsert).
+    This will create or update the provider and all its accounts (upsert), replacing old records if they already exist.
     """
     encrypted_password = encrypt_password(provider.financial_provider_password, provider.budget_id)
     budget_id = provider.budget_id

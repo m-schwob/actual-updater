@@ -147,7 +147,14 @@ def store_provider_accounts(
             update_account_row(budget_id, financial_provider, financial_provider_username, cursor, account_link.actual_account_id, account_link.financial_provider_account_id)
         conn.commit()
 
-def update_account_row(budget_id, financial_provider, financial_provider_username, cursor, actual_account_id, financial_provider_account):
+def update_account_row(
+    budget_id: str,
+    financial_provider: str,
+    financial_provider_username: str,
+    cursor: sqlite3.Cursor,
+    actual_account_id: str,
+    financial_provider_account: str
+) -> None:
     cursor.execute(
         f'''
         INSERT OR REPLACE INTO {ACCOUNTS_TABLE}
@@ -157,7 +164,12 @@ def update_account_row(budget_id, financial_provider, financial_provider_usernam
         (actual_account_id, financial_provider_account, budget_id, financial_provider, financial_provider_username)
     )
 
-def set_provider_accounts_to_removed(budget_id, financial_provider, financial_provider_username, cursor):
+def set_provider_accounts_to_removed(
+    budget_id: str,
+    financial_provider: str,
+    financial_provider_username: str,
+    cursor: sqlite3.Cursor
+) -> None:
     cursor.execute(
         f'''
         UPDATE {ACCOUNTS_TABLE}
@@ -167,7 +179,14 @@ def set_provider_accounts_to_removed(budget_id, financial_provider, financial_pr
         (budget_id, financial_provider, financial_provider_username)
     )
 
-def update_providers_table(encrypted_password, budget_id, financial_provider, financial_provider_username, financial_provider_accounts, cursor):
+def update_providers_table(
+    encrypted_password: str,
+    budget_id: str,
+    financial_provider: str,
+    financial_provider_username: str,
+    financial_provider_accounts: List[str],
+    cursor: sqlite3.Cursor
+) -> None:
     cursor.execute(
         f'''
         INSERT OR REPLACE INTO {PROVIDERS_TABLE}

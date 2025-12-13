@@ -301,7 +301,7 @@ def find_accounts(
 
         cursor.execute(
             f'''
-            SELECT {BUDGET_ID}, {ACTUAL_ACCOUNT_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_ACCOUNT}, {FINANCIAL_PROVIDER_USERNAME}, {"financial_provider_password," if return_password else ""} {REMOVED}
+            SELECT {BUDGET_ID}, {ACTUAL_ACCOUNT_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_ACCOUNT}, {FINANCIAL_PROVIDER_USERNAME}, {FINANCIAL_PROVIDER_PASSWORD + "," if return_password else ""} {REMOVED}
             FROM {ACCOUNTS_TABLE}
             WHERE {' AND '.join(conditions)}
             ''',

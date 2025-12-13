@@ -65,7 +65,7 @@ def initialize_db(db_path: PathLike = DB_PATH) -> None:
         create_accounts_table(cursor)
         conn.commit()
 
-def create_providers_table(cursor: sqlite3.Cursor):
+def create_providers_table(cursor: sqlite3.Cursor) -> None:
     cursor.execute(
             f'''
             CREATE TABLE IF NOT EXISTS {PROVIDERS_TABLE} (
@@ -79,7 +79,7 @@ def create_providers_table(cursor: sqlite3.Cursor):
             '''
         )
 
-def create_accounts_table(cursor: sqlite3.Cursor):
+def create_accounts_table(cursor: sqlite3.Cursor) -> None:
     cursor.execute(
             f'''
             CREATE TABLE IF NOT EXISTS {ACCOUNTS_TABLE} (

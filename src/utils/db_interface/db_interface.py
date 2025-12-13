@@ -97,7 +97,13 @@ def create_accounts_table(cursor):
         )
 
 
-def get_account_mappings(db_path, budget_id, financial_provider, financial_provider_username, accounts):
+def get_account_mappings(
+    db_path: PathLike,
+    budget_id: str,
+    financial_provider: str,
+    financial_provider_username: str,
+    accounts: List[str]
+) -> List[tuple]:
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         placeholders = ','.join('?' * len(accounts))

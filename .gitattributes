@@ -1,0 +1,1 @@
+* text=auto # for cross platform line endings (need also "git config --local core.autocrlf input")

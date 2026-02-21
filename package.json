@@ -1,16 +1,47 @@
 {
+  "name": "actual-updater",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Provide Sync services between all major Israeli banks and credit card companies, to the Actual app",
+  "engines": {
+    "node": ">= 20.0.0"
+  },
+  "license": "MIT",
   "type": "commonjs",
   "scripts": {
-    "start": "ts-node-esm ./src/index.ts",
-    "config": "ts-node-esm ./src/updateAccount.ts",
+    "start": "tsx src/service/index.ts",
+    "start:dev": "tsx watch src/service/index.ts",
+    "config": "tsx src/updateAccount.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:scraper-manual": "tsx tests/service/scraper-manual-test.ts",
     "lint": "eslint . --max-warnings 0",
     "build": "tsc",
-    "build-w": "tsc -w"
+    "build:dev": "tsc --project tsconfig.dev.json",
+    "build-w": "tsc -w",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@actual-app/api": "^6.2.1",
-    "crypto": "^1.0.1",
-    "israeli-bank-scrapers": "^4.0.2",
-    "keytar": "^7.9.0"
+    "@actual-app/api": "^25.11.0",
+    "better-sqlite3": "^12.5.0",
+    "israeli-bank-scrapers": "^6.3.1",
+    "js-yaml": "^4.1.1",
+    "keytar": "^7.9.0",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^24.10.1",
+    "@typescript-eslint/eslint-plugin": "^8.48.0",
+    "@typescript-eslint/parser": "^8.48.0",
+    "eslint": "^9.39.1",
+    "jest": "^30.2.0",
+    "prompt-sync": "^4.2.0",
+    "ts-jest": "^29.4.5",
+    "tsx": "^4.20.6",
+    "typescript-eslint": "^8.48.0"
   }
 }

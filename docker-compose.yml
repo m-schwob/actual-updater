@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  # for image testing
+  actual-updater:
+    build:
+      dockerfile: Dockerfile
+    container_name: actual-updater
+    restart: on-failure:3
+    depends_on:
+      - actual-server
+
+
+  actual-server:
+    image: docker.io/actualbudget/actual-server:latest
+    volumes:
+      - ./storage/actual-data:/data
+      

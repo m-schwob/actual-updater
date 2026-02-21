@@ -1,0 +1,14 @@
+{
+    "loginMethod": "openid",
+    "allowedLoginMethods": [
+        "openid"
+    ],
+    "enforceOpenId": true,
+    "openId": {
+        "discoveryURL": "http://127.0.0.1:9091",
+        "client_id": "actual-client-id",
+        "client_secret": "actual_client_secret",
+        "server_hostname": "http://127.0.0.1:5006",
+        "authMethod": "oauth2"
+    }
+}

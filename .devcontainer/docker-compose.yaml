@@ -1,0 +1,38 @@
+
+services:
+  dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    # for debugging dns resolution issues, set the ip manually
+    # environment:
+    #   - CHROMIUM_URL=http://127.21.0.2:9222
+    volumes:
+      - ..:/workspaces/actual-updater:cached
+    # VSCode will attach here
+    networks:
+      - appnet
+
+
+  # To recreate the chromium service manually while keeping it in the devcontainer stack run:
+  #   docker compose -p actual-updater_devcontainer -f .devcontainer/docker-compose.yaml up -d --no-deps --force-recreate chromium
+  chromium:
+    image: zenika/alpine-chrome:latest
+    shm_size: "0.5g" # 512MB - increase if you run into issues
+    command:
+      - chromium-browser
+      - --headless
+      - --disable-gpu
+      - --disable-dev-shm-usage
+      - --remote-debugging-address=0.0.0.0
+      - --remote-debugging-port=9222
+      - "--remote-allow-origins=http://dev" # change to * for dns resolution issues debugging
+    security_opt:
+      - seccomp=chrome.json
+    networks:
+      - appnet
+
+
+networks:
+  appnet:
+    driver: bridge

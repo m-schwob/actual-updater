@@ -1,0 +1,34 @@
+{
+    "npm.packageManager": "yarn",
+    "cSpell.words": [
+        "authelia",
+        "Fernet",
+        "pyproject",
+        "supervisorctl",
+        "supervisord"
+    ],
+    "cSpell.ignorePaths": [
+        "package-lock.json",
+        "node_modules",
+        "tests/docker/authelia/authelia.log"
+    ],
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+    "files.exclude": {
+        "**/actual_updater.egg-info/": true
+    },
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true,
+    "python.testing.cwd": "${workspaceFolder}",
+    "python.defaultInterpreterPath": "/opt/venv/bin/python",
+    "python.terminal.activateEnvironment": false,
+    "jest.jestCommandLine": "yarn test",
+    "jest.runMode": "on-demand",
+    "jest.rootPath": ".",
+    "typescript.preferences.includePackageJsonAutoImports": "auto"
+}

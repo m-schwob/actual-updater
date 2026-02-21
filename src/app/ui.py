@@ -35,6 +35,7 @@ class AccountsManagerUI:
             ):
                 ui.label('Bank Name').classes('w-32').style(f'color:{TITLE_COLOR}; width: {COLUMN_WIDTH};')
                 ui.label('Account').classes('w-32').style(f'color:{TITLE_COLOR}; width: {COLUMN_WIDTH};')
+                ui.label('User').classes('w-32').style(f'color:{TITLE_COLOR}; width: {COLUMN_WIDTH};')
                 ui.label('Password').classes('w-32').style(f'color:{TITLE_COLOR}; width: {COLUMN_WIDTH};')
                 ui.label('').classes('w-10')
                 ui.label('').classes('w-10')
@@ -58,6 +59,12 @@ class AccountsManagerUI:
                             .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
                             .style(f'width: {COLUMN_WIDTH};')
                         )
+                        user_input = (
+                            ui.input(value=entry.get('user', ''))
+                            .classes('w-32')
+                            .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
+                            .style(f'width: {COLUMN_WIDTH};')
+                        )
                         password_input = (
                             ui.input(value=entry.get('password', '••••••••'))
                             .classes('w-32 password')
@@ -66,14 +73,15 @@ class AccountsManagerUI:
                         )
                         ui.button(
                             icon='save',
-                            on_click=lambda i=index, b=bank_input, a=account_input, p=password_input: self.save_row(
-                                i, b, a, p
+                            on_click=lambda i=index, b=bank_input, a=account_input, u=user_input, p=password_input: self.save_row(
+                                i, b, a, u, p
                             ),
                             color=BUTTON_COLOR,
                         ).classes('w-10')
                     else:
                         ui.label(entry['bank_name']).classes('w-32').style(f'width: {COLUMN_WIDTH};')
                         ui.label(entry['account']).classes('w-32').style(f'width: {COLUMN_WIDTH};')
+                        ui.label(entry.get('user', '')).classes('w-32').style(f'width: {COLUMN_WIDTH};')
                         ui.label('••••••••').classes('w-32').style(f'width: {COLUMN_WIDTH};')
                         ui.button(icon='edit', on_click=lambda i=index: self.edit_row(i), color=BUTTON_COLOR).classes(
                             'w-10'
@@ -102,6 +110,12 @@ class AccountsManagerUI:
                     .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
                     .style(f'width: {COLUMN_WIDTH};')
                 )
+                new_user = (
+                    ui.input('User')
+                    .classes('w-32')
+                    .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
+                    .style(f'width: {COLUMN_WIDTH};')
+                )
                 new_password = (
                     ui.input('Password')
                     .classes('w-32 password')
@@ -110,17 +124,18 @@ class AccountsManagerUI:
                 )
                 ui.label('').classes('w-10')  # Placeholder for edit button
                 ui.button(
-                    icon='add', on_click=lambda: self.add_row(new_bank, new_account, new_password), color=BUTTON_COLOR
+                    icon='add', on_click=lambda: self.add_row(new_bank, new_account, new_user, new_password), color=BUTTON_COLOR
                 ).classes('w-10')
 
     def edit_row(self, index):
         self.accounts[index]['editable'] = True
         self.refresh_table()
 
-    def save_row(self, index, bank_input, account_input, password_input):
+    def save_row(self, index, bank_input, account_input, user_input, password_input):
         self.accounts[index] = {
             'bank_name': bank_input.value,
             'account': account_input.value,
+            'user': user_input.value,
             'password': password_input.value,
             'editable': False,
         }
@@ -131,7 +146,7 @@ class AccountsManagerUI:
             del self.accounts[index]
             self.refresh_table()
 
-    def add_row(self, bank_input, account_input, password_input):
+    def add_row(self, bank_input, account_input, user_input, password_input):
         if not bank_input.value or not account_input.value or not password_input.value:
             ui.notify('All fields required', color='negative')
             return
@@ -139,6 +154,7 @@ class AccountsManagerUI:
             {
                 'bank_name': bank_input.value,
                 'account': account_input.value,
+                'user': user_input.value,
                 'password': password_input.value,
                 'editable': False,
             }

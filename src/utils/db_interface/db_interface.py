@@ -223,7 +223,7 @@ def load_accounts(
         where_clause = f"WHERE {BUDGET_ID}='{budget_id}' AND {REMOVED} = FALSE"
         if actual_account_ids:
             # Filter by specific actual account IDs using simple IN clause
-            where_clause += f"AND {ACTUAL_ACCOUNT_ID} IN ({actual_account_ids})"
+            where_clause += f" AND {ACTUAL_ACCOUNT_ID} IN ({actual_account_ids})"
         cursor.execute(
             f'''
             SELECT {",".join(fields_to_select)}

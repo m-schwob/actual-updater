@@ -24,14 +24,10 @@ app.add_middleware(SessionMiddleware, secret_key="fast-api-session-secret-key")
 
 
 # Define the update page route
-@ui.page('/')
+@ui.page("/")
 def updater_page(request: Request):
-    user: dict = request.session.get('user')
-    user_data = {
-        'name': user.get('name'),
-        'budgets': BUDGETS_DATA,
-        'default_budget': "Pizza Party Fund"
-    }
+    user: dict = request.session.get("user")
+    user_data = {"name": user.get("name"), "budgets": BUDGETS_DATA, "default_budget": "Pizza Party Fund"}
     return AccountsManagerUI(user_data=user_data).start_ui()
 
 
@@ -39,20 +35,20 @@ def updater_page(request: Request):
 BUDGETS_DATA = {
     "Pizza Party Fund": {
         "accounts": [
-            {"bank_name": "Bank Hapoalim", "account": "Checking"},
-            {"bank_name": "Bank Leumi", "account": "Savings"},
+            {"bank_name": "Bank Hapoalim", "account": "Checking", "user": "john_doe"},
+            {"bank_name": "Bank Leumi", "account": "Savings", "user": "jane_doe"},
         ]
     },
     "Secret Vacation Stash": {
         "accounts": [
-            {"bank_name": "Mizrahi Bank", "account": "Investment"},
-            {"bank_name": "Discount Bank", "account": "Business"},
-            {"bank_name": "Mercantile Bank", "account": "Joint"},
+            {"bank_name": "Mizrahi Bank", "account": "Investment", "user": "investor123"},
+            {"bank_name": "Discount Bank", "account": "Business", "user": "biz_owner"},
+            {"bank_name": "Mercantile Bank", "account": "Joint", "user": "family_acc"},
         ]
     },
     "Emergency Unicorn Fund": {
         "accounts": [
-            {"bank_name": "Bank Otsar Hahayal", "account": "Credit Card"},
+            {"bank_name": "Bank Otsar Hahayal", "account": "Credit Card", "user": "unicorn_fan"},
         ]
     },
 }

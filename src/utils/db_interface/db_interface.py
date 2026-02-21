@@ -1,8 +1,22 @@
 from os import PathLike
 import sqlite3
 from typing import List, Dict, Optional
+import json
 from src.utils.db_interface.credential_encryption import encrypt_password, decrypt_password
-from src.utils.constants import DB_PATH
+from src.utils.constants import (
+    DB_PATH,
+    BUDGET_ID,
+    ACTUAL_ACCOUNT_ID,
+    FINANCIAL_PROVIDER_ACCOUNT,
+    REMOVED,
+    FINANCIAL_PROVIDER,
+    FINANCIAL_PROVIDER_USERNAME,
+    FINANCIAL_PROVIDER_PASSWORD,
+    ACCOUNTS,
+    ACCOUNTS_TABLE,
+    PROVIDERS_TABLE,
+)
+from src.utils.db_interface.types import BudgetProvider
 
 
 def _process_account_rows(cursor: sqlite3.Cursor, budget_id: Optional[str] = None) -> List[Dict[str, str]]:
@@ -25,16 +39,18 @@ def _process_account_rows(cursor: sqlite3.Cursor, budget_id: Optional[str] = Non
         account = dict(zip(columns, row))
 
         # Handle password decryption if present
-        if 'password' in account:
+        if FINANCIAL_PROVIDER_PASSWORD in account:
             # Determine budget_id for decryption
-            decrypt_budget_id = budget_id if budget_id is not None else account.get('budget_id')
+            decrypt_budget_id = budget_id if budget_id is not None else account.get(BUDGET_ID)
             if decrypt_budget_id is None:
-                raise KeyError("Missing 'budget_id' for password decryption in account row")
-            account['password'] = decrypt_password(account['password'], decrypt_budget_id)
+                raise KeyError(f"Missing '{BUDGET_ID}' for password decryption in account row")
+            account[FINANCIAL_PROVIDER_PASSWORD] = decrypt_password(
+                account[FINANCIAL_PROVIDER_PASSWORD], decrypt_budget_id
+            )
 
         # Convert removed field to boolean if present
-        if 'removed' in account:
-            account['removed'] = account['removed'] == 1 or account['removed'] == '1'
+        if REMOVED in account:
+            account[REMOVED] = account[REMOVED] == 1 or account[REMOVED] == '1'
 
         accounts.append(account)
 
@@ -45,50 +61,140 @@ def initialize_db(db_path: PathLike = DB_PATH) -> None:
     """Initialize the SQLite database schema according to the design specification."""
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-
-        # Create accounts table according to design schema
-        cursor.execute(
-            '''
-            CREATE TABLE IF NOT EXISTS accounts (
-                budget_id TEXT NOT NULL,
-                financial_provider TEXT NOT NULL,
-                financial_provider_account TEXT NOT NULL,
-                password TEXT NOT NULL,
-                actual_account_id TEXT NOT NULL,
-                removed BOOLEAN NOT NULL DEFAULT FALSE,
-                PRIMARY KEY (budget_id, actual_account_id)
-            )
-        '''
-        )
-
+        create_providers_table(cursor)
+        create_accounts_table(cursor)
         conn.commit()
 
+def create_providers_table(cursor: sqlite3.Cursor) -> None:
+    cursor.execute(
+            f'''
+            CREATE TABLE IF NOT EXISTS {PROVIDERS_TABLE} (
+                {BUDGET_ID} TEXT NOT NULL,
+                {FINANCIAL_PROVIDER} TEXT NOT NULL,
+                {FINANCIAL_PROVIDER_USERNAME} TEXT NOT NULL,
+                {FINANCIAL_PROVIDER_PASSWORD} TEXT NOT NULL,
+                {ACCOUNTS} TEXT,
+                PRIMARY KEY ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME})
+            )
+            '''
+        )
 
-def store_account(
+def create_accounts_table(cursor: sqlite3.Cursor) -> None:
+    cursor.execute(
+            f'''
+            CREATE TABLE IF NOT EXISTS {ACCOUNTS_TABLE} (
+                {ACTUAL_ACCOUNT_ID} TEXT NOT NULL,
+                {FINANCIAL_PROVIDER_ACCOUNT} TEXT NOT NULL,
+                {REMOVED} BOOLEAN NOT NULL DEFAULT FALSE,
+                {BUDGET_ID} TEXT NOT NULL,
+                {FINANCIAL_PROVIDER} TEXT NOT NULL,
+                {FINANCIAL_PROVIDER_USERNAME} TEXT NOT NULL,
+                FOREIGN KEY ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}) 
+                    REFERENCES {PROVIDERS_TABLE}({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME})
+                    ON DELETE CASCADE
+            )
+            '''
+        )
+
+
+def get_account_mappings(
+    db_path: PathLike,
     budget_id: str,
     financial_provider: str,
-    financial_provider_account: str,
-    password: str,
-    actual_account_id: str,
+    financial_provider_username: str,
+    accounts: List[str]
+) -> List[tuple]:
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        placeholders = ','.join('?' * len(accounts))
+        cursor.execute(
+            f'''
+            SELECT {ACTUAL_ACCOUNT_ID}, {FINANCIAL_PROVIDER_ACCOUNT}
+            FROM {ACCOUNTS_TABLE}
+            WHERE {BUDGET_ID} = ? 
+            AND {FINANCIAL_PROVIDER} = ? 
+            AND {FINANCIAL_PROVIDER_USERNAME} = ?
+            AND {FINANCIAL_PROVIDER_ACCOUNT} IN ({placeholders})
+            ''',
+            (budget_id, financial_provider, financial_provider_username, *accounts)
+        )
+        return cursor.fetchall()
+
+
+def store_provider_accounts(
+    provider: BudgetProvider,
     db_path: PathLike = DB_PATH,
 ) -> None:
-    """Store a single account for a specific budget with encrypted password.
+    """Store a provider and all its associated account mappings for a specific budget, with encrypted password.
 
-    This will create a new account or replace the old one if it already exists (upsert).
+    This will create or update the provider and all its accounts (upsert), replacing old records if they already exist.
     """
-    encrypted_password = encrypt_password(password, budget_id)
+    encrypted_password = encrypt_password(provider.financial_provider_password, provider.budget_id)
+    budget_id = provider.budget_id
+    financial_provider = provider.financial_provider
+    financial_provider_username = provider.financial_provider_username
+    financial_provider_accounts = [account.financial_provider_account_id for account in provider.accounts_mapping]
 
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
-        cursor.execute(
-            '''
-            INSERT OR REPLACE INTO accounts 
-            (budget_id, financial_provider, financial_provider_account, password, actual_account_id, removed)
-            VALUES (?, ?, ?, ?, ?, FALSE)
-            ''',
-            (budget_id, financial_provider, financial_provider_account, encrypted_password, actual_account_id),
-        )
+        # Upsert provider record (password stored in providers table)
+        update_providers_table(encrypted_password, budget_id, financial_provider, financial_provider_username, financial_provider_accounts, cursor)
+        # We set all account rows to removed=True, so that if they are not given by user, removed will be True
+        set_provider_accounts_to_removed(budget_id, financial_provider, financial_provider_username, cursor)
+        for account_link in provider.accounts_mapping:
+            # Upsert account record (no password column in accounts table)
+            # Any row given here is updated to removed=False
+            update_account_row(budget_id, financial_provider, financial_provider_username, cursor, account_link.actual_account_id, account_link.financial_provider_account_id)
         conn.commit()
+
+def update_account_row(
+    budget_id: str,
+    financial_provider: str,
+    financial_provider_username: str,
+    cursor: sqlite3.Cursor,
+    actual_account_id: str,
+    financial_provider_account: str
+) -> None:
+    cursor.execute(
+        f'''
+        INSERT OR REPLACE INTO {ACCOUNTS_TABLE}
+        ({ACTUAL_ACCOUNT_ID}, {FINANCIAL_PROVIDER_ACCOUNT}, {BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}, {REMOVED})
+        VALUES (?, ?, ?, ?, ?, FALSE)
+        ''',
+        (actual_account_id, financial_provider_account, budget_id, financial_provider, financial_provider_username)
+    )
+
+def set_provider_accounts_to_removed(
+    budget_id: str,
+    financial_provider: str,
+    financial_provider_username: str,
+    cursor: sqlite3.Cursor
+) -> None:
+    cursor.execute(
+        f'''
+        UPDATE {ACCOUNTS_TABLE}
+        SET {REMOVED} = TRUE
+        WHERE {BUDGET_ID} = ? AND {FINANCIAL_PROVIDER} = ? AND {FINANCIAL_PROVIDER_USERNAME} = ?
+        ''',
+        (budget_id, financial_provider, financial_provider_username)
+    )
+
+def update_providers_table(
+    encrypted_password: str,
+    budget_id: str,
+    financial_provider: str,
+    financial_provider_username: str,
+    financial_provider_accounts: List[str],
+    cursor: sqlite3.Cursor
+) -> None:
+    cursor.execute(
+        f'''
+        INSERT OR REPLACE INTO {PROVIDERS_TABLE}
+        ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}, {FINANCIAL_PROVIDER_PASSWORD}, {ACCOUNTS})
+        VALUES (?, ?, ?, ?, ?)
+        ''',
+        (budget_id, financial_provider, financial_provider_username, encrypted_password, json.dumps(financial_provider_accounts))
+    )
 
 
 def load_accounts(
@@ -110,25 +216,20 @@ def load_accounts(
     """
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
+        fields_to_select = [ACTUAL_ACCOUNT_ID, FINANCIAL_PROVIDER, FINANCIAL_PROVIDER_ACCOUNT, FINANCIAL_PROVIDER_USERNAME]
+        if return_passwords:
+            fields_to_select.append(FINANCIAL_PROVIDER_PASSWORD)
 
-        params = [budget_id]
-
+        where_clause = f"WHERE {BUDGET_ID}='{budget_id}' AND {REMOVED} = FALSE"
         if actual_account_ids:
             # Filter by specific actual account IDs using simple IN clause
-            placeholders = ', '.join(['?'] * len(actual_account_ids))
-            where_clause = f"WHERE budget_id = ? AND actual_account_id IN ({placeholders}) AND removed = FALSE"
-            params.extend([actual_id for actual_id in actual_account_ids])
-        else:
-            # Return all accounts for the budget
-            where_clause = "WHERE budget_id = ? AND removed = FALSE"
-        
+            where_clause += f"AND {ACTUAL_ACCOUNT_ID} IN ({actual_account_ids})"
         cursor.execute(
             f'''
-            SELECT actual_account_id, financial_provider, financial_provider_account{", password" if return_passwords else ""}
-            FROM accounts
+            SELECT {",".join(fields_to_select)}
+            FROM {ACCOUNTS_TABLE}
             {where_clause}
-            ''',
-            params,
+            '''
         )
 
         return _process_account_rows(cursor, budget_id=budget_id)
@@ -139,12 +240,12 @@ def remove_account(budget_id: str, actual_account_id: str, db_path: PathLike = D
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            '''
-            UPDATE accounts 
-            SET removed = TRUE
-            WHERE budget_id = ? AND actual_account_id = ?
+            f'''
+            UPDATE {ACCOUNTS_TABLE} 
+            SET {REMOVED} = TRUE
+            WHERE {BUDGET_ID} = ? AND {ACTUAL_ACCOUNT_ID} = ?
             ''',
-            (budget_id, actual_account_id),
+            (budget_id, actual_account_id)
         )
 
         return cursor.rowcount > 0
@@ -155,11 +256,11 @@ def delete_account(budget_id: str, actual_account_id: str, db_path: PathLike = D
     with sqlite3.connect(db_path) as conn:
         cursor = conn.cursor()
         cursor.execute(
-            '''
-            DELETE FROM accounts 
-            WHERE budget_id = ? AND actual_account_id = ?
+            f'''
+            DELETE FROM {ACCOUNTS_TABLE} 
+            WHERE {BUDGET_ID} = ? AND {ACTUAL_ACCOUNT_ID} = ?
             ''',
-            (budget_id, actual_account_id),
+            (budget_id, actual_account_id)
         )
 
         return cursor.rowcount > 0
@@ -170,6 +271,7 @@ def find_accounts(
     financial_provider: Optional[str] = None,
     financial_provider_account: Optional[str] = None,
     actual_account_id: Optional[str] = None,
+    financial_provider_username: Optional[str] = None,
     include_removed: bool = False,
     return_password: bool = False,
     db_path: PathLike = DB_PATH,
@@ -181,6 +283,7 @@ def find_accounts(
         financial_provider: Filter by financial provider
         financial_provider_account: Filter by financial provider account
         actual_account_id: Filter by actual account ID
+        financial_provider_username: Filter by financial provider username
         include_removed: Whether to include removed accounts (default: False)
         return_password: Whether to include decrypted passwords (default: False)
         db_path: Database path
@@ -195,30 +298,35 @@ def find_accounts(
         params = []
 
         if budget_id is not None:
-            conditions.append("budget_id = ?")
+            conditions.append(f"{BUDGET_ID} = ?")
             params.append(budget_id)
         if financial_provider is not None:
-            conditions.append("financial_provider = ?")
+            conditions.append(f"{FINANCIAL_PROVIDER} = ?")
             params.append(financial_provider)
         if financial_provider_account is not None:
-            conditions.append("financial_provider_account = ?")
+            conditions.append(f"{FINANCIAL_PROVIDER_ACCOUNT} = ?")
             params.append(financial_provider_account)
         if actual_account_id is not None:
-            conditions.append("actual_account_id = ?")
+            conditions.append(f"{ACTUAL_ACCOUNT_ID} = ?")
             params.append(actual_account_id)
+        if financial_provider_username is not None:
+            conditions.append(f"{FINANCIAL_PROVIDER_USERNAME} = ?")
+            params.append(financial_provider_username)
         if not include_removed:
-            conditions.append("removed = FALSE")
+            conditions.append(f"{REMOVED} = FALSE")
 
         if not conditions:
             return []  # No filters provided, return empty list
 
         cursor.execute(
             f'''
-            SELECT budget_id, actual_account_id, financial_provider, financial_provider_account, {"password," if return_password else ""} removed
-            FROM accounts
+            SELECT {BUDGET_ID}, {ACTUAL_ACCOUNT_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_ACCOUNT}, {FINANCIAL_PROVIDER_USERNAME}, {FINANCIAL_PROVIDER_PASSWORD if return_password else ""}, {REMOVED}
+            FROM {ACCOUNTS_TABLE}
             WHERE {' AND '.join(conditions)}
             ''',
             params,
         )
+        cursor.execute(
+            f'"'            SELECT {BUDGET_ID}, {ACTUAL_ACCOUNT_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_ACCOUNT}, {FINANCIAL_PROVIDER_USERNAME}, {FINANCIAL_PROVIDER_PASSWORD if return_password else }, {REMOVED}            FROM {ACCOUNTS_TABLE}            WHERE {'"
 
         return _process_account_rows(cursor, budget_id=budget_id)

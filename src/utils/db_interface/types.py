@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -20,6 +21,6 @@ class BudgetProvider:
     budget_id: str
     financial_provider: str
     financial_provider_username: str
-    financial_provider_password: str  # encrypted string as stored in DB
+    financial_provider_password: Optional[str]  # None means preserve the existing password in the DB
     accounts_mapping: list[AccountsLink]
 

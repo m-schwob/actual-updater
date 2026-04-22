@@ -16,6 +16,34 @@ DELETE_COLOR = '#E11D48'
 TITLE_COLOR = '#96ABC1'
 
 COLUMN_WIDTH = '11rem'
+NOTIFICATION_TIMEOUT = 8000
+
+
+def _notify_error(message: str) -> None:
+    ui.notify(
+        message,
+        type='negative',
+        timeout=NOTIFICATION_TIMEOUT,
+        actions=[{'icon': 'close', 'color': 'white', 'round': True, 'dense': True}],
+    )
+
+
+def _notify_warning(message: str) -> None:
+    ui.notify(
+        message,
+        type='warning',
+        timeout=NOTIFICATION_TIMEOUT,
+        actions=[{'icon': 'close', 'color': 'dark', 'round': True, 'dense': True}],
+    )
+
+
+def _notify_success(message: str) -> None:
+    ui.notify(
+        message,
+        type='positive',
+        timeout=NOTIFICATION_TIMEOUT,
+        actions=[{'icon': 'close', 'color': 'white', 'round': True, 'dense': True}],
+    )
 
 
 class AccountsManagerUI:
@@ -38,6 +66,8 @@ class AccountsManagerUI:
         self.current_budget = user_data.get('default_budget', '')
         self.accounts = self._get_accounts(self.current_budget)
         self.container = None
+        self.budget_select = None
+        self._programmatic_budget_change = False
 
     def refresh_table(self):
         self.container.clear()
@@ -65,11 +95,9 @@ class AccountsManagerUI:
                     .style(f'background-color: {TABLE_ADD_BG};')
                 ):
                     if entry.get('editable', False):
-                        bank_input = (
-                            ui.select(options=constants.SUPPORTED_BANKS, value=entry['bank_name'])
-                            .classes('w-32')
-                            .props(f'label-color=grey-5 input-style="color: {TEXT_COLOR}"')
-                            .style(f'width: {COLUMN_WIDTH};')
+                        # Bank name is immutable once created — displayed as a label
+                        ui.label(entry['bank_name']).classes('w-32').style(
+                            f'width: {COLUMN_WIDTH}; color: {TEXT_COLOR};'
                         )
                         account_input = (
                             ui.input(value=entry['account'])
@@ -91,9 +119,9 @@ class AccountsManagerUI:
                         )
                         ui.button(
                             icon='save',
-                            on_click=lambda i=index, b=bank_input, a=account_input, u=user_input, p=password_input: self.save_row(
-                                i, b, a, u, p
-                            ),
+                            on_click=lambda i=index, bank=entry[
+                                'bank_name'
+                            ], a=account_input, u=user_input, p=password_input: self.save_row(i, bank, a, u, p),
                             color=BUTTON_COLOR,
                         ).classes('w-10')
                         ui.button(
@@ -164,9 +192,9 @@ class AccountsManagerUI:
             self.accounts[index]['editable'] = False
         self.refresh_table()
 
-    def save_row(self, index, bank_input, account_input, user_input, password_input):
+    def save_row(self, index, bank_name, account_input, user_input, password_input):
         entry = {
-            'bank_name': bank_input.value,
+            'bank_name': bank_name,
             'account': account_input.value,
             'user': user_input.value,
             'password': password_input.value,
@@ -175,12 +203,13 @@ class AccountsManagerUI:
         try:
             self.db.save_account(self.current_budget, entry)
         except Exception as e:
-            ui.notify(f'Failed to save: {e}', color='negative')
+            _notify_error(f'Failed to save: {e}')
             entry['editable'] = True  # keep the row open so the user can correct and retry
             self.accounts[index] = entry
             self.refresh_table()
             return
         self.accounts[index] = entry
+        _notify_success('Saved successfully')
         self.refresh_table()
 
     def delete_row(self, index):
@@ -188,14 +217,14 @@ class AccountsManagerUI:
             try:
                 self.db.delete_account(self.current_budget, self.accounts[index])
             except Exception as e:
-                ui.notify(f'Failed to delete: {e}', color='negative')
+                _notify_error(f'Failed to delete: {e}')
                 return
             del self.accounts[index]
             self.refresh_table()
 
     def add_row(self, bank_input, account_input, user_input, password_input):
         if not bank_input.value or not account_input.value or not password_input.value:
-            ui.notify('All fields required', color='negative')
+            _notify_error('All fields required')
             return
         entry = {
             'bank_name': bank_input.value,
@@ -207,13 +236,49 @@ class AccountsManagerUI:
         try:
             self.db.save_account(self.current_budget, entry)
         except Exception as e:
-            ui.notify(f'Failed to add: {e}', color='negative')
+            _notify_error(f'Failed to add: {e}')
             return
         self.accounts.append(entry)
+        _notify_success('Account added successfully')
         self.refresh_table()
 
     def change_budget(self, event_handler: ValueChangeEventArguments):
-        self.current_budget = event_handler.value
+        if self._programmatic_budget_change:
+            return
+        new_budget = event_handler.value
+        editing_in_progress = any(a.get('editable', False) for a in self.accounts)
+        if editing_in_progress:
+            # Revert the select immediately; let the dialog decide whether to proceed
+            self._set_budget_select(self.current_budget)
+            with ui.dialog() as dialog, ui.card().style(f'background-color: {TABLE_HEADER_BG}; color: {TEXT_COLOR};'):
+                ui.label('You have unsaved changes.').style(
+                    f'color: {TEXT_COLOR}; font-weight: bold; font-size: 1.2rem;'
+                )
+                ui.label('Discard changes and switch budget?').style(f'color: {TEXT_COLOR};')
+                with ui.row().classes('justify-end gap-2 w-full'):
+                    ui.button('Cancel', on_click=dialog.close)
+                    ui.button(
+                        'Discard & Switch',
+                        on_click=lambda: self._confirm_budget_switch(dialog, new_budget),
+                        color=BUTTON_COLOR,
+                    )
+            dialog.open()
+            return
+        self._apply_budget_switch(new_budget)
+
+    def _set_budget_select(self, value: str) -> None:
+        """Update the budget select value without triggering the on_change handler."""
+        self._programmatic_budget_change = True
+        self.budget_select.value = value
+        self._programmatic_budget_change = False
+
+    def _confirm_budget_switch(self, dialog, new_budget: str) -> None:
+        dialog.close()
+        self._set_budget_select(new_budget)
+        self._apply_budget_switch(new_budget)
+
+    def _apply_budget_switch(self, new_budget: str) -> None:
+        self.current_budget = new_budget
         self.accounts = self._get_accounts(self.current_budget)
         self.refresh_table()
 
@@ -239,12 +304,16 @@ class AccountsManagerUI:
                     )
                     ui.label('').style('flex:1')  # Spacer to push select to the right
 
-                    ui.select(
-                        options=self._get_budgets(),
-                        value=self._get_default_budget(),
-                        label='Budget',
-                        on_change=self.change_budget,
-                    ).classes('w-32').style(f'width: 13rem; color: {TEXT_COLOR}; text-align: right;')
+                    self.budget_select = (
+                        ui.select(
+                            options=self._get_budgets(),
+                            value=self._get_default_budget(),
+                            label='Budget',
+                            on_change=self.change_budget,
+                        )
+                        .classes('w-32')
+                        .style(f'width: 13rem; color: {TEXT_COLOR}; text-align: right;')
+                    )
 
                 # Accounts table, fills parent width
                 with ui.row().classes('w-full'):

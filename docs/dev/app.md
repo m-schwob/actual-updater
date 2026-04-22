@@ -56,9 +56,7 @@ Clicking the edit button on a row:
 
 **Constraints in edit mode:**
 
-- **Bank name is immutable** once a row has been created. The bank name is part of the provider identity (primary key). Changing it would create a new, different provider.
-
-  > **TODO (not implemented):** The bank name selector in edit mode is currently not locked — it remains editable. This should be made read-only. Submitting a changed bank name would currently trigger a `ValueError` from the DB layer (the UPDATE WHERE finds no match) which surfaces as an error notification, but the UX is incorrect. The fix is to disable the bank name field in edit mode.
+- **Bank name is immutable** once a row has been created. The bank name is part of the provider identity (primary key). Changing it would create a new, different provider. In edit mode the bank name is displayed as a read-only label (not a selector).
 
 - **Username can be changed**, but the new combination of `(bank_name, username)` is a new provider identity. The DB layer will reject it unless a real password is supplied (the UPDATE WHERE `old_username` finds no match → `ValueError: Password is required when adding a new provider`). This error surfaces to the user as a save error notification, and the row stays in edit mode for correction.
 
@@ -97,7 +95,7 @@ The budget dropdown in the header calls `change_budget()` when changed:
 2. Reloads `self.accounts` from the DB for the new budget.
 3. Re-renders the table.
 
-> **TODO (not implemented):** If any row is currently in edit mode when the user switches budget, the unsaved changes are silently discarded. The UI should detect this and warn the user before switching.
+> **Implemented:** When the user switches budget while a row is in edit mode, a warning notification is shown (`'Unsaved edits will be discarded when switching budget.'`). The switch proceeds immediately regardless — the user is informed but not blocked.
 
 ---
 

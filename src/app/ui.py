@@ -96,6 +96,11 @@ class AccountsManagerUI:
                             ),
                             color=BUTTON_COLOR,
                         ).classes('w-10')
+                        ui.button(
+                            icon='close',
+                            on_click=lambda i=index: self.cancel_edit(i),
+                            color=BUTTON_COLOR,
+                        ).classes('w-10')
                     else:
                         ui.label(entry['bank_name']).classes('w-32').style(f'width: {COLUMN_WIDTH};')
                         ui.label(entry['account']).classes('w-32').style(f'width: {COLUMN_WIDTH};')
@@ -104,9 +109,6 @@ class AccountsManagerUI:
                         ui.button(icon='edit', on_click=lambda i=index: self.edit_row(i), color=BUTTON_COLOR).classes(
                             'w-10'
                         )
-
-                    # Delete icon (except new-entry row)
-                    if index < len(self.accounts):
                         ui.button(
                             icon='delete', on_click=lambda i=index: self.delete_row(i), color=BUTTON_COLOR
                         ).classes('w-10')
@@ -150,7 +152,16 @@ class AccountsManagerUI:
                 ).classes('w-10')
 
     def edit_row(self, index):
+        self.accounts[index]['_original'] = dict(self.accounts[index])
         self.accounts[index]['editable'] = True
+        self.refresh_table()
+
+    def cancel_edit(self, index):
+        original = self.accounts[index].pop('_original', None)
+        if original is not None:
+            self.accounts[index] = original
+        else:
+            self.accounts[index]['editable'] = False
         self.refresh_table()
 
     def save_row(self, index, bank_input, account_input, user_input, password_input):

@@ -93,8 +93,16 @@ def _create_accounts_table(cursor: sqlite3.Cursor) -> None:
                 {FINANCIAL_PROVIDER_USERNAME} TEXT NOT NULL,
                 FOREIGN KEY ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}) 
                     REFERENCES {PROVIDERS_TABLE}({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME})
-                    ON DELETE CASCADE
+                    ON DELETE CASCADE,
+                UNIQUE ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}, {FINANCIAL_PROVIDER_ACCOUNT})
             )
+            '''
+    )
+    # Create unique index for existing DBs that predate the UNIQUE constraint above
+    cursor.execute(
+        f'''
+            CREATE UNIQUE INDEX IF NOT EXISTS accounts_unique_idx
+            ON {ACCOUNTS_TABLE} ({BUDGET_ID}, {FINANCIAL_PROVIDER}, {FINANCIAL_PROVIDER_USERNAME}, {FINANCIAL_PROVIDER_ACCOUNT})
             '''
     )
 

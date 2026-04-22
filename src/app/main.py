@@ -7,40 +7,59 @@ from src.app.ui import AccountsManagerUI
 from src.utils.constants import DB_PATH
 from src.utils.db_interface.db_interface import initialize_db
 
-# Create FastAPI app
-app = FastAPI()
-
-# Initialize OIDC authentication
-oidc = OIDCAuth(
-    app=app,
-    client_id="actual-updater-client-id",
-    client_secret="actual-updater-client-secret",
-    server_url="http://127.0.0.1:9091",
-)
-
-# Bind FastAPI to NiceGUI
-ui.run_with(app)
-
-# Add session middleware globally for all session needs (must added last to be the first checked middleware in the stack)
-app.add_middleware(SessionMiddleware, secret_key="fast-api-session-secret-key")
-
-initialize_db(DB_PATH)  # Initialize the database at startup
-
 
 def _get_budgets() -> list[str]:
     # TODO: fetch the actual budget list from the Actual Budget server via API
+    # NOTE: when this is implemented, tests/app/test_main_integration.py mocks this function —
+    #       update the mock to match the real return type and signature.
     return ["", ""]
 
 
-# Define the update page route
-@ui.page("/")
-def update_page(request: Request):
-    user: dict = request.session.get("user")
-    budgets = _get_budgets()
+def create_app(
+    oidc_client_id: str = "actual-updater-client-id",
+    oidc_client_secret: str = "actual-updater-client-secret",
+    oidc_server_url: str = "http://127.0.0.1:9091",
+    session_secret: str = "fast-api-session-secret-key",
+    db_path: str = DB_PATH,
+) -> FastAPI:
+    """Application factory.
 
-    user_data = {
-        "name": user.get("name"),
-        "budgets": budgets,
-        "default_budget": budgets[0] if budgets else "",
-    }
-    return AccountsManagerUI(user_data=user_data).start_ui()
+    Accepts parameters so tests can inject mocks/overrides without
+    touching module-level state.
+    """
+    _app = FastAPI()
+
+    # Initialize OIDC authentication
+    OIDCAuth(
+        app=_app,
+        client_id=oidc_client_id,
+        client_secret=oidc_client_secret,
+        server_url=oidc_server_url,
+    )
+
+    # Bind FastAPI to NiceGUI
+    ui.run_with(_app)
+
+    # Must be added last so it is first in the middleware stack
+    _app.add_middleware(SessionMiddleware, secret_key=session_secret)
+
+    initialize_db(db_path)
+
+    # Define the update page route
+    @ui.page("/")
+    def update_page(request: Request):
+        user: dict = request.session.get("user")
+        budgets = _get_budgets()
+
+        user_data = {
+            "name": user.get("name"),
+            "budgets": budgets,
+            "default_budget": budgets[0] if budgets else "",
+        }
+        return AccountsManagerUI(user_data=user_data).start_ui()
+
+    return _app
+
+
+# Production entry point
+app = create_app()

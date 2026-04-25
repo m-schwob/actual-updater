@@ -86,7 +86,7 @@ class TestMyClass(unittest.TestCase):
 **How it works:**  
 NiceGUI ships `nicegui.testing.User` — an in-process simulator that intercepts `ui.notify`, simulates clicks/input, and asserts element visibility. No browser binary is required. Tests run in milliseconds.
 
-**Activation:** The root `conftest.py` registers `nicegui.testing.user_plugin` conditionally via `pytest_configure` — it is skipped when all explicit path arguments point outside `tests/app` (e.g. `pytest tests/utils/`), avoiding unnecessary asyncio setup for pure unit test runs. This provides the `user` async fixture automatically whenever app tests are collected.
+**Activation:** The root `conftest.py` registers `nicegui.testing.user_plugin` conditionally via `pytest_configure`. It loads the plugin when: no explicit path args are given (full test run), or at least one path argument could include app tests (contains `"app"`, equals `"tests"`, or equals `"."`). It is skipped only when all explicit paths are clearly outside `tests/app` — e.g. `pytest tests/utils/` — avoiding unnecessary asyncio setup for pure unit test runs. This provides the `user` async fixture automatically whenever app tests are collected.
 
 **Fixtures (in `tests/app/conftest.py`):**
 - `seeded_db` — creates a temp SQLite file seeded with `fake_db._SEED` data; cleaned up after each test via `tmp_path`.
@@ -116,8 +116,9 @@ async def test_something(user: User, account_page):
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 pythonpath = ["."]
+main_file = ""
 ```
-`asyncio_mode = "auto"` means all `async def` test functions are automatically treated as coroutines — no `@pytest.mark.asyncio` decorator needed. `pythonpath = ["."]` is required because `tests` is excluded from the package install.
+`asyncio_mode = "auto"` means all `async def` test functions are automatically treated as coroutines — no `@pytest.mark.asyncio` decorator needed. `pythonpath = ["."]` is required because `tests` is excluded from the package install. `main_file = ""` prevents NiceGUI from looking for a root-level `main.py`.
 
 ---
 
@@ -189,7 +190,7 @@ All phases must achieve both.
 `tests/sources/utils/fake_db.py` provides `create_fake_db(path)` and `_SEED` — a list of `BudgetProvider` objects with two budgets (`budget-alice`, `budget-bob`) and realistic providers (Isracard, Bank Leumi, Visa Cal, Max).
 
 - Reuse `_SEED` and `create_fake_db` in all test phases that need pre-populated data.
-- `create_fake_db` deletes the file and re-seeds when called with a fresh path. It will **not** re-seed if the file already exists — so call `os.unlink(path)` first when you need a clean reset. This is what `GET /dev/reset-db` in `dev_main.py` does automatically.
+- `create_fake_db` deletes the file and re-seeds when called with a fresh path. It will **not** re-seed if the file already exists — so call `os.unlink(path)` first when you need a clean reset. In Phase 3b tests, `setUp` calls `os.unlink` before starting the server so `dev_main.py` always seeds a fresh DB.
 
 ---
 

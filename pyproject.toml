@@ -64,4 +64,4 @@ directory = "coverage"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 pythonpath = ["."]
-addopts = "-p nicegui.testing.user_plugin"
+main_file = ""

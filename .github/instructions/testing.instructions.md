@@ -92,6 +92,8 @@ NiceGUI ships `nicegui.testing.User` — an in-process simulator that intercepts
 - `seeded_db` — creates a temp SQLite file seeded with `fake_db._SEED` data; cleaned up after each test via `tmp_path`.
 - `account_page` — overrides `AccountsManagerUI.db` with a `UIBackend` pointing at `seeded_db`; registers a `@ui.page('/')` for the test; restores the class-level `db` after the test.
 
+Each test gets its own private SQLite file via `tmp_path`. NiceGUI's internal testing fixtures reset all element and page state between tests. The `account_page` fixture saves and restores `AccountsManagerUI.db`. No server process is involved — there is zero shared state between tests.
+
 **Test structure:**
 ```python
 @pytest.mark.asyncio
@@ -128,23 +130,39 @@ pythonpath = ["."]
 **Pattern:**
 ```python
 class TestUIPlaywright(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        # Start dev server as subprocess on a fixed test port (e.g. 8765)
-        # Poll until server responds
-        # Launch playwright + chromium (headless)
-
-    @classmethod
-    def tearDownClass(cls):
-        # Stop browser, terminate server subprocess
-
     def setUp(self):
-        # New page per test
+        # Fresh temp DB path (delete so dev_main re-seeds from scratch)
+        self._tmp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        self._tmp_db.close()
+        os.unlink(self._tmp_db.name)
+
+        # Free OS port — no hardcoded port numbers
+        self._port = _free_port()  # uses socket.bind(('127.0.0.1', 0))
+        self._base_url = f"http://127.0.0.1:{self._port}"
+
+        env = os.environ.copy()
+        env["FAKE_DB_PATH"] = self._tmp_db.name
+        self._server_proc = subprocess.Popen([sys.executable, "-m", "uvicorn", ...], env=env)
+        _wait_for_server(self._base_url)
+
+        self._playwright = sync_playwright().start()
+        self._browser = self._playwright.chromium.launch(headless=True)
+        self.page = self._browser.new_page()
+        self.page.goto(self._base_url, wait_until="networkidle")
+
+    def tearDown(self):
+        self.page.screenshot(...)  # always save screenshot
+        self._browser.close()
+        self._playwright.stop()
+        self._server_proc.terminate()
+        self._server_proc.wait(timeout=10)
+        os.unlink(self._tmp_db.name)
 ```
 
 - Use `dev_main.py` as the server target (pre-seeded fake DB, no OIDC).
+- Each test gets its own uvicorn process, its own temp SQLite DB, and its own free port. No shared state between tests — fully parallel-safe.
+- Pass the DB path to the server via the `FAKE_DB_PATH` environment variable (read by `dev_main.py` at startup).
 - Save screenshots to `tests/screenshots/<test_name>.png` — useful for visual regression and human review.
-- Port isolation: each `TestCase` class uses a dedicated port. If parallel execution is ever added, use `socket.bind(('', 0))` to get a free port dynamically.
 
 **Browser install:** Playwright Chromium is installed into the devcontainer via `postCreateCommand`:
 ```
@@ -156,10 +174,17 @@ Do not add a separate chromium service — the existing `chromium` service in `d
 
 ## Test Isolation Rules
 
-1. **SQLite files:** Every test that touches the DB must use its own `tempfile.TemporaryDirectory`. Never share a path between tests.
-2. **NiceGUI global state:** The `nicegui_reset_globals` fixture (automatically used by `user`) resets NiceGUI between tests. Do not rely on state from a previous test.
-3. **`AccountsManagerUI.db`:** The `account_page` fixture in `conftest.py` saves and restores the class-level `db` attribute. Always use this fixture when testing UI — never patch `AccountsManagerUI.db` directly in a test.
-4. **Ports:** Phase 3b server runs on a fixed test port. Do not reuse port 8080 (dev server) in tests.
+**Every test must be fully independent: it must pass regardless of which tests ran before it, after it, or in parallel.** A test that only passes when run in a specific order is a broken test.
+
+**Sequential independence** means a test is unaffected by what previous tests wrote or deleted.  
+**Parallel independence** means tests can run concurrently without racing on shared resources (ports, files, in-process state).  
+All phases must achieve both.
+
+1. **SQLite files:** Every test that touches the DB must use its own temp path (`tempfile.TemporaryDirectory` or `tmp_path`). Never share a path between tests. Never use a hardcoded path like `/tmp/test.db`.
+2. **In-process state:** Do not rely on global or class-level state left by a previous test. Use fixtures to set up and tear down all state explicitly.
+3. **`AccountsManagerUI.db`:** The `account_page` fixture saves and restores the class-level `db` attribute. Always use this fixture when testing UI — never patch `AccountsManagerUI.db` directly in a test.
+4. **Ports:** Never hardcode a port number shared across tests. Use `socket.bind(('127.0.0.1', 0))` to get a free port per test.
+5. **No cross-test state assumptions:** Tests must not assume the absence or presence of data added by other tests. Each test must explicitly set up every precondition it needs.
 
 ---
 
@@ -168,7 +193,7 @@ Do not add a separate chromium service — the existing `chromium` service in `d
 `tests/sources/utils/fake_db.py` provides `create_fake_db(path)` and `_SEED` — a list of `BudgetProvider` objects with two budgets (`budget-alice`, `budget-bob`) and realistic providers (Isracard, Bank Leumi, Visa Cal, Max).
 
 - Reuse `_SEED` and `create_fake_db` in all test phases that need pre-populated data.
-- `create_fake_db` is idempotent: it calls `initialize_db` every time, skips seeding if the file already exists. Delete the file to force a fresh seed.
+- `create_fake_db` deletes the file and re-seeds when called with a fresh path. It will **not** re-seed if the file already exists — so call `os.unlink(path)` first when you need a clean reset. This is what `GET /dev/reset-db` in `dev_main.py` does automatically.
 
 ---
 

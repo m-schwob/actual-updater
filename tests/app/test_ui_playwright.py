@@ -1,13 +1,11 @@
 """Phase 3b — End-to-end tests using Playwright (headless Chromium).
 
 Strategy:
-  - setUpClass starts a real uvicorn subprocess on TEST_PORT using dev_main.py
-    (pre-seeded fake DB, no OIDC).
-  - tearDownClass stops the browser and server process.
-  - Each test gets a fresh Playwright page (setUp/tearDown).
+  - Each test starts its own uvicorn subprocess on a free OS port with its own
+    temp SQLite database — zero shared state between tests.
+  - setUp/tearDown own the full server + browser lifecycle per test.
   - Screenshots are saved to tests/screenshots/ for every test — useful for
     visual regression review and human inspection.
-  - Port 8765 is reserved for this test suite; do NOT use port 8080 (dev server).
 
 Run with:
     pytest tests/app/test_ui_playwright.py -v
@@ -19,6 +17,7 @@ Prerequisites:
 """
 
 import os
+import socket
 import subprocess
 import sys
 import tempfile
@@ -27,14 +26,19 @@ import unittest
 from pathlib import Path
 
 import httpx
-from playwright.sync_api import Browser, Page, Playwright, sync_playwright
+from playwright.sync_api import Page, sync_playwright
 
-TEST_PORT = 8765
-BASE_URL = f"http://localhost:{TEST_PORT}"
 SCREENSHOTS_DIR = Path(__file__).parent.parent / "screenshots"
 
 # How long to wait for the server to be ready (seconds)
 _SERVER_TIMEOUT = 15
+
+
+def _free_port() -> int:
+    """Return a free TCP port on localhost."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
 
 
 def _wait_for_server(url: str, timeout: float = _SERVER_TIMEOUT) -> None:
@@ -51,64 +55,56 @@ def _wait_for_server(url: str, timeout: float = _SERVER_TIMEOUT) -> None:
 
 
 class TestUIPlaywright(unittest.TestCase):
-    _server_proc: subprocess.Popen
-    _playwright: Playwright
-    _browser: Browser
     page: Page
 
-    @classmethod
-    def setUpClass(cls) -> None:
+    def setUp(self) -> None:
         SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
 
-        # Create a fresh temp DB for this test run — delete first so create_fake_db
-        # always re-seeds from scratch, regardless of prior test runs.
-        tmp = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
-        tmp.close()
-        os.unlink(tmp.name)
-        cls._temp_db_path = tmp.name
+        # Each test gets its own temp DB and free port — fully isolated.
+        self._tmp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
+        self._tmp_db.close()
+        os.unlink(self._tmp_db.name)  # let create_fake_db create it fresh
+
+        self._port = _free_port()
+        self._base_url = f"http://127.0.0.1:{self._port}"
 
         env = os.environ.copy()
-        env["FAKE_DB_PATH"] = cls._temp_db_path
+        env["FAKE_DB_PATH"] = self._tmp_db.name
 
-        # Start the dev server as a subprocess with the isolated DB
-        cls._server_proc = subprocess.Popen(
+        self._server_proc = subprocess.Popen(
             [
-                sys.executable, "-m", "uvicorn",
+                sys.executable,
+                "-m",
+                "uvicorn",
                 "tests.app.dev_main:app",
-                "--port", str(TEST_PORT),
-                "--host", "127.0.0.1",
+                "--port",
+                str(self._port),
+                "--host",
+                "127.0.0.1",
             ],
             env=env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            cwd=Path(__file__).parent.parent.parent,  # workspace root
+            cwd=Path(__file__).parent.parent.parent,
         )
-        _wait_for_server(BASE_URL)
+        _wait_for_server(self._base_url)
 
-        # Start headless Chromium
-        cls._playwright = sync_playwright().start()
-        cls._browser = cls._playwright.chromium.launch(headless=True)
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls._browser.close()
-        cls._playwright.stop()
-        cls._server_proc.terminate()
-        cls._server_proc.wait(timeout=10)
-        try:
-            os.unlink(cls._temp_db_path)
-        except FileNotFoundError:
-            pass
-
-    def setUp(self) -> None:
+        self._playwright = sync_playwright().start()
+        self._browser = self._playwright.chromium.launch(headless=True)
         self.page = self._browser.new_page()
-        self.page.goto(BASE_URL, wait_until="networkidle")
+        self.page.goto(self._base_url, wait_until="networkidle")
 
     def tearDown(self) -> None:
-        # Always save a screenshot — shows the final state after the test
         screenshot_path = SCREENSHOTS_DIR / f"{self._testMethodName}.png"
         self.page.screenshot(path=str(screenshot_path))
-        self.page.close()
+        self._browser.close()
+        self._playwright.stop()
+        self._server_proc.terminate()
+        self._server_proc.wait(timeout=10)
+        try:
+            os.unlink(self._tmp_db.name)
+        except FileNotFoundError:
+            pass
 
     # ------------------------------------------------------------------
     # Helpers
@@ -140,11 +136,7 @@ class TestUIPlaywright(unittest.TestCase):
             )
 
     def test_page_shows_seeded_provider(self) -> None:
-        """budget-alice seed data includes Isracard — must appear on load.
-
-        Isracard is the second row alphabetically ('Isracard' > 'Bank Leumi'), so
-        it survives the delete test that removes only the first row (Bank Leumi).
-        """
+        """budget-alice seed data includes Isracard — must appear on load."""
         self._wait_for_table()
         self.page.wait_for_selector("text=Isracard", timeout=5000)
 
@@ -218,17 +210,14 @@ class TestUIPlaywright(unittest.TestCase):
     # ------------------------------------------------------------------
 
     def test_delete_row_removes_provider(self) -> None:
-        """Deleting the first provider row must remove it from the table.
-
-        Bank Leumi is the first row (alphabetical sort within budget-alice seed
-        data: 'Bank Leumi' < 'Isracard').  The click targets the first delete
-        button, so we verify that Bank Leumi disappears.
-        """
+        """Deleting the first provider row (Bank Leumi) must remove it from the table."""
         self._wait_for_table()
+        # Bank Leumi is the first row in budget-alice (alphabetical order in DB)
         self.page.wait_for_selector("text=Bank Leumi", timeout=3000)
         self._click_first_button("delete")
-        # Wait for Bank Leumi to disappear
+        # Bank Leumi must disappear; Isracard (second row) must remain
         self.page.wait_for_selector("text=Bank Leumi", state="hidden", timeout=5000)
+        self.assertTrue(self.page.locator("text=Isracard").is_visible())
 
     # ------------------------------------------------------------------
     # Budget switch
@@ -238,7 +227,6 @@ class TestUIPlaywright(unittest.TestCase):
         """Switching to budget-bob must replace Isracard with Visa Cal."""
         self._wait_for_table()
         self.page.wait_for_selector("text=Isracard", timeout=3000)
-
         # Click the budget select and choose budget-bob
         budget_select = self.page.locator(".q-select").first
         budget_select.click()

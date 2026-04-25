@@ -20,8 +20,12 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "black",
-    "pylint", 
-    "coverage"
+    "pylint",
+    "coverage",
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+    "selenium",
 ]
 
 # Essential for making src/ modules importable
@@ -55,3 +59,8 @@ skip_covered = false
 
 [tool.coverage.html]
 directory = "coverage"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["."]
+addopts = "-p nicegui.testing.user_plugin"

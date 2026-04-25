@@ -10,6 +10,7 @@ package-lock.json
 .devcontainer/authelia/authelia.log
 .devcontainer/supervisord.log
 .devcontainer/supervisord.pid
+.devcontainer/logs/
 /data
 /coverage/
 actual_updater.egg-info/

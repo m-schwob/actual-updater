@@ -164,11 +164,7 @@ class TestUIPlaywright(unittest.TestCase):
 - Pass the DB path to the server via the `FAKE_DB_PATH` environment variable (read by `dev_main.py` at startup).
 - Save screenshots to `tests/screenshots/<test_name>.png` — useful for visual regression and human review.
 
-**Browser install:** Playwright Chromium is installed into the devcontainer via `postCreateCommand`:
-```
-playwright install chromium --with-deps
-```
-Do not add a separate chromium service — the existing `chromium` service in `docker-compose.yaml` is used by the TypeScript bank scraper and must not be modified.
+**Browser install:** The Playwright Chromium binary is baked into the dev container image (`.devcontainer/Dockerfile`). `postCreateCommand` re-runs `playwright install chromium --with-deps` each time the container starts so the binary stays in sync if the `playwright` pip package is upgraded in `pyproject.toml`.
 
 ---
 

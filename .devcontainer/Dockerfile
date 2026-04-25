@@ -38,6 +38,9 @@ RUN python3 -m venv $VIRTUAL_ENV \
     && $VIRTUAL_ENV/bin/pip install -e ${BUILD_TEMP_DIR}/python/[dev] \
     && rm -rf ${BUILD_TEMP_DIR}/python
 
+# Install Playwright's Chromium browser and its OS-level dependencies.
+RUN $VIRTUAL_ENV/bin/playwright install chromium --with-deps
+
 # Set workdir to VS Code default workspace mount for devcontainer
 WORKDIR /workspaces/actual-updater
 

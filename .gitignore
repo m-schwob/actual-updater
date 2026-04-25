@@ -13,3 +13,4 @@ package-lock.json
 /data
 /coverage/
 actual_updater.egg-info/
+tests/screenshots/

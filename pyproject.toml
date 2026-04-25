@@ -26,6 +26,7 @@ dev = [
     "pytest-asyncio",
     "httpx",
     "selenium",
+    "playwright",
 ]
 
 # Essential for making src/ modules importable
